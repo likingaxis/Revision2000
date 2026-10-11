@@ -22,7 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
@@ -47,6 +47,7 @@ ACTIONS = {
                r"e figure, \clearpage/\newpage, \needspace o \nopagebreak per i titoli, sillabazione con \hyphenation o \-, "
                r"\sloppy/\emergencystretch locali. Preferisci la modifica piu' piccola e locale; non cambiare l'impostazione globale "
                "del documento senza segnalarlo in ai_note."),
+    "like": ("MI PIACE", "Passaggio che piace all'autore: NON e' una revisione e non va modificato; usalo come riferimento di stile."),
     "general": ("NOTA GENERALE", "Nota non ancorata a un punto preciso: applicala dove pertinente."),
 }
 
@@ -319,7 +320,9 @@ class Project:
                         "facendo solo le modifiche richieste e senza toccare il resto. "
                         "Alla fine restituiscimi, come file scaricabili, SOLO i file .tex che hai modificato, completi e pronti da sostituire "
                         "(se possibile in un unico ZIP con la stessa struttura di cartelle), piu' _review/review.json aggiornato "
-                        "con status (\"done\" o \"skipped\") e ai_note per ogni revisione. "
+                        "con status (\"done\", \"skipped\" o \"proposed\"), ai_note e, dove richiesto, le proposals per ogni revisione. "
+                        "Per le revisioni da proporre (o con indicazioni vaghe) non modificare il file: mostrami anche qui in chat "
+                        "le 3 alternative per ciascuna. Usa i passaggi nella sezione \"Stile dell'autore\" come riferimento di stile. "
                         "Poi elencami in breve le revisioni saltate o dubbie.")
             return ("Ti allego uno ZIP con il PDF \"" + self.name + "\" e _review/REVIEW.md, che contiene le revisioni annotate sul PDF "
                     "(pagina + testo). Per ogni revisione restituiscimi il testo corretto, nell'ordine e con l'id (R001, R002...), "
@@ -388,14 +391,31 @@ class Project:
 1. Per ogni revisione qui sotto, apri il file `.tex` indicato e localizza il punto usando **`Sorgente ancorato`** come stringa esatta (old_string). Il numero di riga e' indicativo: se il file e' cambiato, cerca per testo. Se manca il sorgente ancorato, usa `Testo nel PDF` e la riga SyncTeX.
 2. Applica l'**azione** richiesta (vedi legenda) con la modifica *minima* necessaria. Preserva comandi LaTeX, `\\ref`, `\\cite`, `\\label`, ambienti e formattazione. Mantieni lo stile accademico italiano della tesi.
 3. Dopo ogni revisione aggiorna l'item corrispondente (stesso `id`) in `review.json` (stessa cartella di questo file): `"status": "done"` (oppure `"skipped"` se non applicabile/ambigua) e `"ai_note"`: breve descrizione di cosa hai fatto o del dubbio. Non modificare gli altri campi.
-4. Se un'indicazione e' ambigua o richiede contenuti che non conosci (dati, fonti), NON inventare: `skipped` + spiegazione in `ai_note`.
-5. Alla fine riassumi in chat le revisioni saltate o dubbie. Non ricompilare a meno che non sia richiesto.
+4. Se un'indicazione richiede contenuti che non conosci (dati, fonti), NON inventare: `skipped` + spiegazione in `ai_note`.
+5. **Revisioni marcate `PROPONI ALTERNATIVE`: NON modificare il file.** L'autore vuole scegliere lui. Scrivi in `review.json`, nello stesso item:
+   `"status": "proposed"` e `"proposals": [{"text": "...", "why": "..."}, ...]` con **3 alternative davvero diverse tra loro**
+   (es. una piu' concisa, una piu' formale/precisa, una ristrutturata), ciascuna pronta da sostituire al testo ancorato
+   (stesso markup LaTeX, `\\cite`/`\\ref` preservati) e con `why` = una frase sul perche' funziona meglio. In `ai_note` puoi aggiungere
+   un breve commento su cosa non andava nell'originale. Se l'item ha `Proposte gia' scartate`, proponi strade diverse da quelle.
+6. **Anche senza quel marcatore**, se l'indicazione e' vaga o soggettiva (es. "non mi piace", "suona male", "poco chiaro", "migliorare")
+   e non dice cosa scrivere, **non decidere tu**: comportati come al punto 5 e proponi alternative.
+7. Alla fine riassumi in chat le revisioni saltate, dubbie o con proposte da scegliere. Non ricompilare a meno che non sia richiesto.
 
 ### Legenda azioni
 """)
         for k, (lab, desc) in ACTIONS.items():
             L.append(f"- **{lab}** (`{k}`): {desc}")
         L.append("")
+        likes = [i for i in items if i.get("action") == "like" and i.get("pdf_text")]
+        if likes:
+            L.append("## Stile dell'autore\n")
+            L.append("Passaggi che all'autore **piacciono**. Non sono revisioni: non modificarli. Usali come riferimento "
+                     "di tono, ritmo, lessico e lunghezza delle frasi quando riscrivi, riformuli o proponi alternative.\n")
+            for it in likes:
+                why = (it.get("note") or "").strip()
+                where = f" ({it['file']}:{it['line']})" if it.get("line") else f" (pag. {it.get('page')})"
+                L.append(f"- «{it['pdf_text']}»{where}" + (f"\n  - perche' piace: {why}" if why else ""))
+            L.append("")
         cur = object()
         for it in open_items:
             if it.get("file") != cur:
@@ -403,6 +423,8 @@ class Project:
                 L.append(f"\n## `{cur}`\n" if cur else ("\n## Revisioni per pagina\n" if self.kind == "pdf" else "\n## Senza file associato\n"))
             lab = ACTIONS.get(it["action"], (it["action"].upper(),))[0]
             prio = f" · priorita' {it['priority']}" if it.get("priority") and it["priority"] != "normale" else ""
+            if it.get("mode") == "propose":
+                prio += " · **PROPONI ALTERNATIVE** (non applicare)"
             if it.get("line"):
                 L.append(f"### {it['id']} · {lab} · `{it.get('file')}:{it.get('line')}` · pag. PDF {it.get('page') or '-'}{prio}\n")
             else:
@@ -436,6 +458,8 @@ class Project:
             if note:
                 head = {"replace": "Nuovo testo", "insert": "Testo da inserire", "move": "Destinazione"}.get(it["action"], "Indicazione")
                 L.append(f"- **{head}:**\n\n```\n{note}\n```")
+            if it.get("rejected"):
+                L.append("- **Proposte gia' scartate** (proponi strade diverse):\n" + "\n".join(f"  - {x}" for x in it["rejected"]))
             L.append("")
         self.md_path.write_text("\n".join(L), encoding="utf-8")
 

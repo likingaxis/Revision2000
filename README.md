@@ -143,9 +143,20 @@ compila con `-synctex=1` (Overleaf: scarica il progetto e compila in locale).
    | 7 | Verifica | cosa controllare (dato, numero, termine) |
    | 8 | Sposta | nota opzionale; dopo **Invio** selezioni nel PDF il punto di arrivo (il testo va *dopo* quella selezione) |
    | 9 | Impaginazione | il problema di layout (ci sono scelte rapide: figura fuori posto, esce dal margine, spazio vuoto…) |
+   | 0 | Mi piace | perché ti piace, facoltativo. Non è una correzione: l'AI lo usa come esempio del tuo stile |
 
 3. **Invio** salva, **Esc** annulla. Spunta **ovunque** per applicare la correzione a tutte le
    occorrenze (es. un termine da uniformare in tutta la tesi).
+
+**Proponi alternative**: con l'interruttore *Proponi* acceso, l'AI non modifica il testo ma ti propone
+3 alternative diverse, ognuna con una breve motivazione. È acceso di default per *Commento* e *Riformula*:
+se scrivi solo "questa frase non mi piace", l'AI non decide al posto tuo. Anche con l'interruttore
+spento, davanti a indicazioni vaghe l'AI propone invece di applicare. Le proposte compaiono nella scheda
+(*da scegliere*): cliccando quella che preferisci, diventa una *Sostituisci* che verrà applicata al
+prossimo invio. *Nessuna mi convince* chiede altre alternative, diverse da quelle scartate.
+
+**Mi piace**: i passaggi segnati con *Mi piace* finiscono nella sezione *Stile dell'autore* del
+`REVIEW.md`. L'AI li usa come riferimento di tono, ritmo e lessico quando riscrive o propone alternative.
 
 **Problemi di impaginazione** (figure, tabelle, spazi vuoti, cose che escono dal margine): premi
 **Area** nella barra (o il tasto **A**, oppure tieni premuto **Alt** e trascina) e disegna un rettangolo
