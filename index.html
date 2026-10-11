@@ -258,11 +258,12 @@ body.editmode .textLayer span:hover{background:color-mix(in srgb,var(--edit) 14%
 .diff.src del,.diff.src ins{font:12px/1.5 "JetBrains Mono",Consolas,monospace}
 
 /* selezione per l'invio e posticipate */
-.item .h .pick{width:20px;height:20px;border-radius:50%;border:1.6px solid var(--line);display:grid;place-items:center;flex:none;color:transparent;
+/* casella quadrata (= scelta per l'invio), non un cerchio pieno che sembrava "fatta" */
+.item .h .pick{width:17px;height:17px;border-radius:5px;border:1.5px solid color-mix(in srgb,var(--ink) 30%,transparent);display:grid;place-items:center;flex:none;color:transparent;margin-right:2px;
   transition:background-color .2s,border-color .2s,color .2s,transform .25s cubic-bezier(.3,1.4,.5,1)}
-.item .h .pick:hover{border-color:var(--ink-2)}
-.item .h .pick.on{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
-.item .h .pick svg{width:12px;height:12px;stroke-width:2.4}
+.item .h .pick:hover{border-color:var(--ink)}
+.item .h .pick.on{background:var(--ink);border-color:var(--ink);color:var(--card)}
+.item .h .pick svg{width:11px;height:11px;stroke-width:2.8}
 .item.unsel{opacity:.6}
 .item.unsel:hover{opacity:.85}
 .item.later{opacity:.7;border:1.5px dashed var(--line);box-shadow:none}
@@ -1023,7 +1024,7 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
     <div style="--k:4"><svg class="i"><use href="#i-grip"/></svg><b>Trascina</b>Le schede su Fatta, Dopo o Elimina, la barra su un bordo</div>
     <div style="--k:5"><svg class="i"><use href="#i-users"/></svg><b>Revisori</b>Importa le note di chi ti rilegge la tesi</div>
   </div>
-  <div style="display:flex;justify-content:center;margin-top:14px"><button class="linkb" id="tourBtn" style="margin:0">Rifai il tour</button></div>
+  <div style="display:flex;justify-content:center;margin-top:14px"><button class="linkb" id="tourBtn" style="margin:0">Fai il tour</button></div>
 </div></div>
 
 <div id="review" class="modal"><div class="sheet">
@@ -2676,7 +2677,15 @@ function paintTour(){
   b.style.left = Math.max(M, Math.min(innerWidth - bw - M, bx))+"px"; b.style.top = Math.max(M, Math.min(innerHeight - bh - M, by))+"px";
   b.querySelector(".tnext").onclick = ()=>tourStep(1); b.querySelector(".tskip").onclick = endTour;
 }
-$("#tourBtn").onclick = ()=>{ toggleModal("guide", false); if(PID) setTimeout(startTour, 300); else toast("Apri un progetto per fare il tour"); };
+$("#tourBtn").onclick = ()=>{
+  toggleModal("guide", false);
+  if(PID){ setTimeout(startTour, 300); return; }
+  // dalla schermata Progetti: apre il progetto più recente e il tour parte da solo
+  try{ localStorage.removeItem("r2k-tour"); }catch(_){}
+  const c = document.querySelector('.pcard[data-pdf="1"]');
+  if(c) setTimeout(()=>open_(c.dataset.id), 250);
+  else toast("Apri un progetto: il tour parte appena si apre", 4500);
+};
 
 // pannello delle revisioni: si allarga trascinandone il bordo, doppio clic per tornare com'era
 (()=>{
