@@ -212,6 +212,28 @@ Premi **Invia all'AI** e scegli una delle due strade. La finestra ti guida passo
 Infine premi **Compila** (pdflatex/xelatex + bibtex/biber, file temporanei in `build/`): il PDF
 si ricarica da solo.
 
+### Revisione con altre persone
+
+Anche un amico, un relatore o un compagno di corso può rivederti la tesi con Revision2000, senza avere
+i file LaTeX. Premi il pulsante con le **due persone**, accanto a *Invia all'AI*.
+
+1. **Tu** scarichi il PDF (*Scarica il PDF*) e glielo mandi.
+2. **La persona** installa Revision2000, trascina il PDF in *Solo PDF* e annota come al solito.
+   Poi apre la stessa finestra, scrive il suo nome e preme *Esporta le mie note*. Ottiene un file
+   `.r2k.json` da mandarti (email, WhatsApp…).
+3. **Tu** premi *Importa note* (o trascini il file sulla finestra). Le note entrano tra le tue
+   revisioni, con il nome di chi le ha scritte, e vengono collegate da sole ai tuoi `.tex`.
+   Se importi due volte lo stesso file non si creano doppioni.
+
+Le correzioni concrete (*Sostituisci*, *Elimina*, *Inserisci*) hanno il pulsante **Applica al .tex**:
+vedi il LaTeX già corretto, controlli e premi Invio. Il file viene salvato senza passare dall'AI, e
+con Ctrl+Z (o *Annulla modifica*) torni indietro. Se la persona aveva anche i sorgenti e ha usato la
+*Modifica diretta*, ricevi la sua modifica LaTeX esatta, pronta da accettare. Le altre note (commenti,
+riformulazioni…) le mandi all'AI come sempre.
+
+Conviene che la persona annoti **la stessa versione del PDF** che hai tu: se è diversa, l'app ti avvisa
+e ricollega comunque le note in base al testo.
+
 ---
 
 ## 6. Aggiornare l'app

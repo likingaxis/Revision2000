@@ -22,7 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-__version__ = "1.7.0"
+__version__ = "1.8.0"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
@@ -297,6 +297,77 @@ class Project:
             f.write(out)
         return {"ok": True, "file": rel, "line": where}
 
+    # ------------------------------------------------------------ revisori umani
+    SHARE_FIELDS = ("action", "note", "priority", "scope", "mode", "page", "pdf_text", "area", "rects", "status", "created", "author",
+                    "latex_old", "latex_new")
+
+    def pdf_sha1(self):
+        return hashlib.sha1(self.pdf.read_bytes()).hexdigest() if self.pdf.exists() else None
+
+    def export_share(self, author):
+        """Le note di un revisore (persona) da passare all'autore: solo pagina, testo e posizione nel PDF,
+        cosi' l'autore le ricollega ai propri sorgenti anche se il revisore aveva solo il PDF."""
+        out = []
+        for it in self.load()["items"]:
+            edit = it.get("action") == "edit"  # modifica diretta fatta dal revisore sulla sua copia del LaTeX
+            if not edit and it.get("status") in ("done", "skipped"):
+                continue
+            e = {k: it[k] for k in self.SHARE_FIELDS if k in it}
+            if edit:  # per l'autore diventa una sostituzione da accettare con un clic
+                e.update(action="replace", status="open", latex_old=it.get("source_match"), latex_new=it.get("note"), note=it.get("note"),
+                         src_file=it.get("file"), src_line=it.get("line"))
+            e["orig_id"] = it["id"]
+            e["author"] = it.get("author") or author or "Revisore"
+            if e.get("status") not in ("style", "later"):
+                e["status"] = "open"
+            if it.get("dest"):
+                e["dest"] = {k: it["dest"].get(k) for k in ("page", "pdf_text", "rects")}
+            out.append(e)
+        return {"format": "revision2000-review", "version": __version__, "exported": datetime.now().isoformat(timespec="seconds"),
+                "author": author or "Revisore", "document": self.name, "pdf_sha1": self.pdf_sha1(), "items": out}
+
+    def import_share(self, pack):
+        if pack.get("format") != "revision2000-review":
+            raise ValueError("Non e' un file di revisioni di Revision2000.")
+        d = self.load()
+        have = {i.get("origin") for i in d["items"] if i.get("origin")}
+        n = max([int(re.sub(r"\D", "", i["id"]) or 0) for i in d["items"]] + [0])
+        added, dupes, unanchored = [], 0, 0
+        for e in pack.get("items", []):
+            author = (e.get("author") or pack.get("author") or "Revisore").strip()[:40]
+            origin = f"{author}|{e.get('orig_id')}|{e.get('created')}"
+            if origin in have:  # stesso file importato due volte
+                dupes += 1
+                continue
+            it = {k: e[k] for k in self.SHARE_FIELDS if k in e}
+            it.update(author=author, origin=origin, imported=datetime.now().isoformat(timespec="seconds"),
+                      status=e.get("status") if e.get("status") in ("style", "later") else "open",
+                      rects=e.get("rects") or [], page=e.get("page"))
+            pt = e.get("pt") or {}
+            if it.get("pdf_text") and self.kind == "latex":
+                it.update(self.locate(pt.get("page") or it["page"], pt.get("x", 0), pt.get("y", 0), it["pdf_text"]))
+                if not it.get("source_match") and not it.get("area"):
+                    unanchored += 1
+            if not it.get("file") and e.get("src_file"):  # stessi sorgenti: vale il percorso relativo del revisore
+                it["file"], it["line"] = e["src_file"], e.get("src_line")
+            dest = e.get("dest")
+            if dest:
+                it["dest"] = {k: dest.get(k) for k in ("page", "pdf_text", "rects")}
+                dp = dest.get("pt") or {}
+                if dest.get("pdf_text") and self.kind == "latex":
+                    loc = self.locate(dp.get("page") or dest.get("page"), dp.get("x", 0), dp.get("y", 0), dest["pdf_text"])
+                    it["dest"].update({k: loc.get(k) for k in ("file", "line", "source_match", "confidence")})
+            n += 1
+            it["id"] = f"R{n:03d}"
+            it["created"] = it.get("created") or it["imported"]
+            d["items"].append(it)
+            have.add(origin)
+            added.append(it["id"])
+        self.save(d)
+        sha = pack.get("pdf_sha1")
+        return {"ok": True, "added": len(added), "ids": added, "dupes": dupes, "unanchored": unanchored,
+                "author": pack.get("author"), "same_pdf": (sha == self.pdf_sha1()) if sha else None}
+
     # ------------------------------------------------------------ compile
     def compile(self):
         """pdf/xe/lualatex + bibtex/biber senza latexmk (non serve Perl), Windows (MiKTeX) e
@@ -463,7 +534,8 @@ class Project:
             for it in likes:
                 why = (it.get("note") or "").strip()
                 where = f" ({it['file']}:{it['line']})" if it.get("line") else f" (pag. {it.get('page')})"
-                L.append(f"- «{it['pdf_text']}»{where}" + (f"\n  - perche' piace: {why}" if why else ""))
+                by = f" (segnalato da {it['author']})" if it.get("author") else ""
+                L.append(f"- «{it['pdf_text']}»{where}{by}" + (f"\n  - perche' piace: {why}" if why else ""))
             L.append("")
         cur = object()
         for it in open_items:
@@ -487,12 +559,17 @@ class Project:
                          + (f", contiene: «{it['pdf_text']}»" if it.get("pdf_text") else " (nessun testo: figura, tabella o spazio vuoto)"))
             elif it.get("pdf_text"):
                 L.append(f"- **Testo nel PDF:** «{it['pdf_text']}»")
+            if it.get("author"):
+                L.append(f"- **Segnalata da:** {it['author']} (un revisore, non l'autore: valuta l'indicazione con giudizio)")
             if it.get("source_match"):
                 L.append(f"- **Sorgente ancorato** (confidenza {it.get('confidence')}):\n\n```latex\n{it['source_match']}\n```")
             elif it.get("source_context"):
                 head = ("Sorgente nel punto dell'area (SyncTeX, cerca qui vicino la figura/tabella o il blocco interessato)"
                         if it.get("area") else "Contesto sorgente (riga SyncTeX, ancoraggio testuale fallito)")
                 L.append(f"- **{head}:**\n\n```latex\n{it['source_context']}\n```")
+            if it.get("latex_new") is not None and it.get("latex_old"):
+                L.append(f"- **Modifica LaTeX gia' scritta dal revisore** (applica esattamente questa sostituzione):\n\n"
+                         f"```latex\n{it['latex_old']}\n```\n\ndiventa\n\n```latex\n{it['latex_new']}\n```")
             dest = it.get("dest")
             if dest:
                 dloc = f"{dest.get('file')}:{dest.get('line')}" if dest.get("line") else "posizione non determinata"
@@ -705,6 +782,10 @@ def install_hint():
 
 # -------------------------------------------------------------------- HTTP
 
+def safe_name(s):
+    return re.sub(r"[^\w.-]+", "_", s or "").strip("_") or "progetto"
+
+
 def make_handler():
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
@@ -719,6 +800,14 @@ def make_handler():
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+
+        def attach(self, data, fname, ctype):
+            self.send_response(200)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Disposition", f'attachment; filename="{fname}"')
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
 
         def raw(self):
             n = int(self.headers.get("Content-Length") or 0)
@@ -750,7 +839,13 @@ def make_handler():
             if u.path == "/pdf":
                 if not proj.pdf.exists():
                     return self.send(404, {"error": "PDF non trovato"})
+                if q.get("dl"):  # da dare a un revisore
+                    return self.attach(proj.pdf.read_bytes(), safe_name(proj.name) + ".pdf", "application/pdf")
                 return self.send(200, proj.pdf.read_bytes(), "application/pdf")
+            if u.path == "/api/share":
+                author = (q.get("author") or [""])[0].strip()[:40]
+                data = json.dumps(proj.export_share(author), ensure_ascii=False, indent=1).encode("utf-8")
+                return self.attach(data, f"{safe_name(proj.name)}_note_{safe_name(author or 'revisore')}.r2k.json", "application/json")
             if u.path == "/api/items":
                 with LOCK:
                     d = proj.load()
@@ -763,16 +858,10 @@ def make_handler():
             if u.path in ("/api/export.zip", "/api/export.md"):
                 if u.path.endswith(".md"):  # solo il report, senza i file del progetto
                     proj.write_md(proj.load())
-                    safe = re.sub(r"[^\w.-]+", "_", proj.name).strip("_") or "progetto"
-                    data, fname = proj.md_path.read_bytes(), f"{safe}_revisioni.md"
+                    data, fname = proj.md_path.read_bytes(), f"{safe_name(proj.name)}_revisioni.md"
                 else:
                     data, fname = proj.export_zip()
-                self.send_response(200)
-                self.send_header("Content-Type", "text/markdown; charset=utf-8" if fname.endswith(".md") else "application/zip")
-                self.send_header("Content-Disposition", f'attachment; filename="{fname}"')
-                self.send_header("Content-Length", str(len(data)))
-                self.end_headers()
-                return self.wfile.write(data)
+                return self.attach(data, fname, "text/markdown; charset=utf-8" if fname.endswith(".md") else "application/zip")
             self.send(404, {"error": "not found"})
 
         def do_POST(self):
@@ -816,6 +905,12 @@ def make_handler():
                     d["items"].append(b)
                     proj.save(d)
                 return self.send(200, b)
+            if u.path == "/api/import":
+                try:
+                    with LOCK:
+                        return self.send(200, proj.import_share(self.body()))
+                except (ValueError, json.JSONDecodeError) as e:
+                    return self.send(400, {"ok": False, "error": str(e)})
             if u.path == "/api/compile":
                 try:
                     return self.send(200, proj.compile())

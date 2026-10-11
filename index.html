@@ -304,6 +304,21 @@ body.editmode .textLayer span:hover{background:color-mix(in srgb,var(--edit) 14%
 .bar i{display:block;height:100%;width:0;background:var(--insert);border-radius:6px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
 .btn-pri{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;background:var(--pri);color:var(--pri-ink);border-radius:999px;padding:11px 16px;font-weight:600;font-size:13.5px;box-shadow:var(--shadow-s)}
 .btn-pri:hover{filter:brightness(1.15)}
+.prow{display:flex;gap:8px;align-items:stretch}
+.item .accept{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;font-weight:600;color:var(--ink);background:var(--sunken);border-radius:999px;padding:5px 11px;transition:background-color .2s}
+.item .accept:hover{background:color-mix(in srgb,var(--insert) 22%,var(--sunken))}
+.item .accept svg{width:14px;height:14px}
+.prow .btn-pri{flex:1}
+.btn-sec{display:grid;place-items:center;width:44px;margin-top:14px;flex:none;background:var(--card);color:var(--ink);border-radius:999px;box-shadow:var(--shadow-s);transition:box-shadow .2s,transform .2s}
+.btn-sec:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+.btn-sec svg{width:18px;height:18px}
+.item .who{font-size:11px;font-weight:600;border-radius:999px;padding:1px 8px;background:color-mix(in srgb,var(--comment) 14%,transparent);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+#share .sheet{width:min(760px,94vw);padding:26px 28px}
+.namein{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:999px;padding:0 14px;box-shadow:var(--shadow-s);color:var(--mut);margin-top:8px}
+.namein input{flex:1;min-width:0;border:0;background:none;padding:8px 0;outline:none;color:var(--ink)}
+.namein svg{width:15px;height:15px}
+body.dropjson #viewer::after{content:"Rilascia per importare le note";position:fixed;inset:16px;border:2px dashed var(--pri);border-radius:24px;display:grid;place-items:center;
+  background:color-mix(in srgb,var(--bg) 70%,transparent);font-weight:600;font-size:16px;z-index:60;pointer-events:none}
 .tools{padding:0 20px 12px;display:flex;flex-direction:column;gap:8px}
 .search{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:999px;padding:0 14px;box-shadow:var(--shadow-s);color:var(--mut)}
 .search input{flex:1;border:0;background:none;padding:9px 0;outline:none}
@@ -484,6 +499,7 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 18.5V7a2.5 2.5 0 0 1 2.5-2.5h9A2.5 2.5 0 0 1 19 7v6.5a2.5 2.5 0 0 1-2.5 2.5H9z"/><path d="M9 9h6M9 12h4"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 17v1a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1"/></symbol>
   <symbol id="i-area" viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M9 12h6M12 9v6"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M15.5 5.6a3 3 0 0 1 0 5.8M17.5 14.3c1.7.6 2.7 2.2 3 4.7"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
   <symbol id="i-type" viewBox="0 0 24 24"><path d="M4 7V5h12v2M10 5v14M7.5 19h5"/><path d="m14.5 19 1-3.5 4.5-4.5 2.5 2.5-4.5 4.5z"/></symbol>
   <symbol id="i-tex" viewBox="0 0 24 24"><path d="M4 6h7M7.5 6v12M11 10h5l-1.5 4L16 18h-5M16 6l4 6-4 6"/></symbol>
@@ -525,7 +541,10 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
     </div>
     <div class="stat"><span class="big" id="count">0</span><span class="lbl" id="countl">revisioni aperte</span></div>
     <div class="bar"><i id="prog"></i></div>
-    <button class="btn-pri" id="bPrompt"><svg class="i"><use href="#i-send"/></svg>Invia all'AI</button>
+    <div class="prow">
+      <button class="btn-pri" id="bPrompt"><svg class="i"><use href="#i-send"/></svg>Invia all'AI</button>
+      <button class="btn-sec" id="bShare" title="Revisione con altre persone: dai il PDF, importa le loro note"><svg class="i"><use href="#i-users"/></svg></button>
+    </div>
   </div>
   <div class="tools">
     <label class="search"><svg class="i"><use href="#i-search"/></svg><input type="search" id="q" placeholder="Cerca nelle revisioni"></label>
@@ -628,6 +647,8 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
     <li style="--k:5"><b>Controlla e scegli</b><span>Premi <i>Compila</i> (o <i>Ricarica</i>): nel pannello ogni revisione risulta fatta o saltata, con la nota dell'AI.
       Dove l'AI ha fatto proposte, clicca quella che preferisci e invia di nuovo.</span></li>
   </ol>
+  <div class="steps"><div class="alt"><div><b>Revisione con altre persone</b>: premi il pulsante con le due persone accanto a «Invia all'AI».
+    Dai il PDF a chi ti rivede: lo annota con Revision2000 ed esporta le note, tu le importi e le ritrovi tra le tue revisioni, con il suo nome.</div></div></div>
 </div></div>
 
 <div id="send" class="modal"><div class="sheet">
@@ -635,6 +656,35 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
   <h3>Invia le revisioni all'AI</h3>
   <p class="lead" id="sendLead"></p>
   <div class="opts" id="sendOpts"></div>
+</div></div>
+
+<div id="share" class="modal"><div class="sheet">
+  <button class="ib close" data-close><svg class="i"><use href="#i-x"/></svg></button>
+  <h3>Revisione con altre persone</h3>
+  <p class="lead">Un'altra persona annota il PDF con Revision2000, poi ti manda un file con le sue note. Lo importi qui e le note finiscono tra le tue revisioni, collegate ai tuoi .tex.</p>
+  <div class="opts">
+    <div class="opt">
+      <div class="oh"><div class="ic"><svg class="i"><use href="#i-down"/></svg></div><div><b>Ricevi le note</b><small>Sei l'autore: qualcuno rivede la tua tesi</small></div></div>
+      <ol class="steps">
+        <li style="--k:0"><b>Dai il PDF alla persona</b><span>Le serve anche Revision2000 (github.com/likingaxis/Revision2000), non i file LaTeX.</span>
+          <a class="sbtn ghost" id="shPdf" download><svg class="i"><use href="#i-file"/></svg>Scarica il PDF</a></li>
+        <li style="--k:1"><b>La persona annota</b><span>Trascina il PDF in «Solo PDF», segna i problemi e poi esporta le note da questa stessa finestra.</span></li>
+        <li style="--k:2"><b>Importa il suo file</b><span>Il file .r2k.json che ti manda. Puoi anche trascinarlo sulla finestra.</span>
+          <button class="sbtn" id="shImport"><svg class="i"><use href="#i-upload"/></svg>Importa note</button></li>
+      </ol>
+    </div>
+    <div class="opt">
+      <div class="oh"><div class="ic"><svg class="i"><use href="#i-send"/></svg></div><div><b>Manda le tue note</b><small>Sei il revisore: stai rivedendo per qualcuno</small></div></div>
+      <ol class="steps">
+        <li style="--k:1"><b>Scrivi il tuo nome</b><span>Così l'autore sa chi ha segnalato cosa.</span>
+          <label class="namein"><svg class="i"><use href="#i-users"/></svg><input id="shName" placeholder="Il tuo nome" maxlength="40" spellcheck="false"></label></li>
+        <li style="--k:2"><b>Esporta le note</b><span id="shCount"></span>
+          <a class="sbtn" id="shExport" download><svg class="i"><use href="#i-down"/></svg>Esporta le mie note</a></li>
+        <li style="--k:3"><b>Mandale all'autore</b><span>Email, WhatsApp, Telegram… L'autore le importa nel suo progetto.</span></li>
+      </ol>
+    </div>
+  </div>
+  <input type="file" id="shFile" accept=".json,application/json" hidden>
 </div></div>
 
 <div id="dockov"><div class="dz" data-d="left">Sinistra</div><div class="dz" data-d="right">Destra</div><div class="dz" data-d="top">In alto</div><div class="dz" data-d="bottom">In basso</div></div>
@@ -937,6 +987,7 @@ async function undoLast(){
   const id = undoStack.pop(); if(!id) return toast("Niente da annullare");
   const it = items.find(i=>i.id===id);
   if(it && it.action==="edit") return undoEdit(it);
+  if(it && it.applied) return unaccept(it);
   await removeItem(id); toast(`${id} annullata`);
 }
 async function removeItem(id){
@@ -987,6 +1038,7 @@ function body(it){
   // come appare la revisione nella scheda: per Sostituisci/Elimina/Inserisci si vede il prima e il dopo
   const q = esc(it.pdf_text||"");
   if(it.action==="edit") return `<div class="diff src"><del>${esc(it.source_match)}</del><ins>${esc(it.note)}</ins></div>`;
+  if(it.latex_new!=null && it.latex_old) return `<div class="diff src"><del>${esc(it.latex_old)}</del><ins>${esc(it.latex_new)}</ins></div>`;
   if(it.area) return `<div class="q areaq">Area · ${q || "figura, tabella o spazio vuoto"}</div>`;
   if(!q) return "";
   if(it.action==="replace") return `<div class="diff"><del>${q}</del><ins>${esc(it.note)}</ins></div>`;
@@ -1008,7 +1060,7 @@ function renderList(){
     <button data-selall="1">Seleziona tutte</button><button data-selall="0">Nessuna</button>` : "";
   $("#prog").style.width = (revs.length? closed/revs.length*100:0)+"%";
   const q = $("#q").value.trim().toLowerCase(), fa = $("#fAct").value;
-  const vis = items.filter(i=>inView(i) && (!fa || i.action===fa) && (!q || [i.id,i.note,i.pdf_text,i.file,i.ai_note].join(" ").toLowerCase().includes(q)))
+  const vis = items.filter(i=>inView(i) && (!fa || i.action===fa) && (!q || [i.id,i.note,i.pdf_text,i.file,i.ai_note,i.author].join(" ").toLowerCase().includes(q)))
     .sort((a,b)=>(a.page||0)-(b.page||0) || ((a.rects[0]||{}).y||0)-((b.rects[0]||{}).y||0));
   let k = 0;
   $("#list").innerHTML = vis.map(it=>{
@@ -1023,16 +1075,17 @@ function renderList(){
     if(it.status==="later") st_ = `<span class="st">posticipata</span>`; else st_ = "";
     const pick = it.status==="open" ? `<button class="pick${isSel(it)?" on":""}" data-op="sel" title="${isSel(it)?"Inclusa nel prossimo invio: clicca per escluderla":"Esclusa dal prossimo invio: clicca per includerla"}">${icon("check")}</button>` : "";
     return `<div class="item ${it.status}${it.status==="open" && !isSel(it)?" unsel":""}${isNew?" new":""}" id="it-${it.id}" data-id="${it.id}" style="--c:${color(it.action)};--k:${isNew?k++:0}">
-      <div class="h">${pick}<span class="tag">${LABEL(it.action)}</span><span class="mono">${it.id}</span>${st_ || st}</div>
+      <div class="h">${pick}<span class="tag">${LABEL(it.action)}</span><span class="mono">${it.id}</span>${it.author?`<span class="who" title="Segnalata da ${esc(it.author)}">${esc(it.author)}</span>`:""}${st_ || st}</div>
       ${body(it)}
       ${it.dest?`<div class="sub">${icon("arrow")}dopo «${esc(it.dest.pdf_text.slice(0,70))}» · p.${it.dest.page}</div>`:(it.action==="move"?`<div class="sub warn">${icon("alert")}manca il punto di arrivo: Modifica, poi Invio</div>`:"")}
       ${it.note && !["replace","insert","edit"].includes(it.action)?`<div class="n">${esc(it.note)}</div>`:""}
       ${it.ai_note?`<div class="ai">${esc(it.ai_note)}</div>`:""}
+      ${canAccept(it) ? `<button class="accept" data-op="accept" title="Applichi tu la correzione al file .tex, senza AI">${icon("type")}Applica al .tex</button>` : ""}
       ${it.status==="proposed" && (it.proposals||[]).length ? `<div class="props"><div class="pt">Proposte dell'AI · clicca quella che preferisci</div>
         ${it.proposals.map((p,i)=>`<button class="prop" data-op="pick" data-i="${i}">${esc(p.text||p)}${p.why?`<small>${esc(p.why)}</small>`:""}</button>`).join("")}
         <button class="linkb" data-op="redo">Nessuna mi convince: chiedi altre proposte</button></div>` : ""}
       <div class="sub">p.${it.page||"–"}${loc?` · <span class="mono">${esc(loc)}</span>`:""}${unanchored?` <span class="warn" title="Non collegata al testo sorgente: verrà usata la riga SyncTeX">${icon("alert")}</span>`:""}${it.scope==="all"?` · ${icon("all")}ovunque`:""}</div>
-      <div class="acts">${it.action==="edit" ? `<button class="ib" data-op="unedit" title="Annulla la modifica nel file .tex">${icon("undo")}</button>` : `<button class="ib" data-op="edit" title="Modifica">${icon("edit")}</button>`}${["style","later"].includes(it.status) || it.action==="edit" ? "" : `<button class="ib" data-op="toggle" title="${isActive(it)?"Segna come fatta":"Riapri"}">${icon(isActive(it)?"check":"undo")}</button>`}${["open","proposed"].includes(it.status) ? `<button class="ib" data-op="later" title="Posticipa: non la invio ora, la riprendo dopo">${icon("clock")}</button>`
+      <div class="acts">${it.action==="edit" || it.applied ? `<button class="ib" data-op="unedit" title="Annulla la modifica nel file .tex">${icon("undo")}</button>` : `<button class="ib" data-op="edit" title="Modifica">${icon("edit")}</button>`}${["style","later"].includes(it.status) || it.action==="edit" ? "" : `<button class="ib" data-op="toggle" title="${isActive(it)?"Segna come fatta":"Riapri"}">${icon(isActive(it)?"check":"undo")}</button>`}${["open","proposed"].includes(it.status) ? `<button class="ib" data-op="later" title="Posticipa: non la invio ora, la riprendo dopo">${icon("clock")}</button>`
       : it.status==="later" ? `<button class="ib" data-op="resume" title="Riprendi: torna tra le aperte">${icon("undo")}</button>` : ""}<button class="ib danger" data-op="del" title="Elimina">${icon("trash")}</button></div>
     </div>`;}).join("") || (items.length && (q||fa) ? `<div class="empty">Nessun risultato.</div>`
       : items.length ? `<div class="empty">Tutto fatto.</div>`
@@ -1054,7 +1107,8 @@ $("#list").addEventListener("click", async e=>{
     Object.assign(it, await api("/api/items/"+it.id,"PATCH",{status:"open", mode:"propose", rejected, proposals:null}));
     renderList(); drawHighlights(); toast(`${it.id}: al prossimo invio l'AI proporrà alternative diverse`); return;
   }
-  if(op==="unedit") return undoEdit(it);
+  if(op==="unedit") return it.applied ? unaccept(it) : undoEdit(it);
+  if(op==="accept") return acceptItem(it, card);
   if(op==="sel"){ Object.assign(it, await api("/api/items/"+it.id,"PATCH",{selected: !isSel(it)})); renderList(); return; }
   if(op==="later" || op==="resume"){
     const patch = op==="later" ? {status:"later", prev_status: it.status} : {status: it.prev_status || "open"};
@@ -1170,10 +1224,11 @@ async function openDirect(sel){
   $("#edText").focus(); $("#edText").setSelectionRange(loc.source_match.length, loc.source_match.length);
 }
 $("#edCancel").onclick = closeEd;
-$("#edAlt").onclick = ()=>{ const s = direct && direct.sel; closeEd(); if(s) setTimeout(()=>openPop(s, s.anchor), 230); };
+$("#edAlt").onclick = ()=>{ if(direct && direct.accept) return; const s = direct && direct.sel; closeEd(); if(s) setTimeout(()=>openPop(s, s.anchor), 230); };
 $("#edSave").onclick = ()=>applyDirect();
 async function applyDirect(){
   if(!direct || !direct.loc || !direct.loc.source_match) return;
+  if(direct.accept) return applyAccepted();
   const {sel, loc} = direct, old = loc.source_match, neu = $("#edText").value;
   if(neu === old){ closeEd(); return; }
   $("#edSave").disabled = true;
@@ -1185,6 +1240,66 @@ async function applyDirect(){
     file:loc.file, line:r.line, page:sel.pt.page, rects:sel.rects});
   items.push(item); undoStack.push(item.id); renderList(); drawHighlights();
   toast(`Salvato in ${loc.file.split("/").pop()}:${r.line} · ricompilo…  (Ctrl+Z annulla)`, 4000);
+  $("#bCompile").click();
+}
+// Accetta: una revisione concreta (tua o di un revisore) applicata da te al .tex, senza passare dall'AI
+const canAccept = it => PINFO && PINFO.kind==="latex" && it.status==="open" && !it.area && it.file &&
+  ((it.latex_new!=null && it.latex_old) || (["replace","delete","insert"].includes(it.action) && it.source_match));
+function flexFind(src, plain){
+  // il testo del PDF nel sorgente, tollerando a capo e spazi diversi
+  // (apostrofi e virgolette tipografiche del PDF contro quelle del sorgente: ’ vs ', “ vs ``)
+  const words = (plain||"").trim().split(/\s+/).filter(Boolean).map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")
+    .replace(/['’‘]/g,"(?:['’‘`])").replace(/["“”]/g,"(?:[\"“”]|``|'')").replace(/[–—]/g,"(?:[–—]|---?)"));
+  if(!words.length) return null;
+  const m = new RegExp(words.join("\\s+")).exec(src); return m && {i:m.index, n:m[0].length};
+}
+function proposedLatex(it){
+  if(it.latex_new!=null && it.latex_old) return {old: it.latex_old, neu: it.latex_new, exact: true};
+  const old = it.source_match, f = flexFind(old, it.pdf_text), note = it.note || "";
+  if(it.action==="insert") return {old, neu: old + " " + note, exact: true};
+  if(!f) return {old, neu: old, exact: false};
+  const put = it.action==="delete" ? "" : note;
+  let neu = old.slice(0, f.i) + put + old.slice(f.i + f.n);
+  if(it.action==="delete") neu = neu.replace(/[ \t]{2,}/g, " ").replace(/ ([.,;:])/g, "$1");
+  return {old, neu, exact: true};
+}
+function acceptItem(it, card){
+  const p=$("#edpop"); clearTimeout(p._h); p.style.display="block";
+  const {old, neu, exact} = proposedLatex(it);
+  direct = {accept: it, sel: null, loc: {file: it.file, line: it.line, source_match: old}};
+  $("#edLoc").textContent = `${it.file.split("/").pop()}:${it.line}`;
+  $("#edInfo").className = "edinfo" + (exact ? "" : " warn");
+  $("#edInfo").textContent = exact
+    ? `Ecco il LaTeX con la correzione${it.author?" di "+it.author:""}: controlla e premi Invio per salvarla nel file.`
+    : `Non riesco a inserire la correzione da solo: modifica tu il LaTeX qui sotto. Proposta: «${(it.note||"elimina").slice(0,160)}»`;
+  $("#edText").value = neu; $("#edSave").disabled = false; $("#edAlt").style.display = "none";
+  const r = card.getBoundingClientRect();
+  p.style.left = Math.max(12, Math.min(innerWidth-p.offsetWidth-12, r.left - p.offsetWidth - 12 > 12 ? r.left - p.offsetWidth - 12 : r.left))+"px";
+  p.style.top = Math.max(12, Math.min(innerHeight-p.offsetHeight-60, r.top))+"px";
+  requestAnimationFrame(()=>p.classList.add("show"));
+  $("#edText").focus();
+}
+async function applyAccepted(){
+  const it = direct.accept, old = direct.loc.source_match, neu = $("#edText").value;
+  if(neu === old){ closeEd(); return; }
+  $("#edSave").disabled = true;
+  const r = await api("/api/edit","POST",{file:it.file, line:it.line, old, new:neu});
+  if(!r.ok){ $("#edSave").disabled = false; return toast(r.error || "Modifica non riuscita", 6000); }
+  closeEd();
+  Object.assign(it, await api("/api/items/"+it.id,"PATCH",{status:"done", applied:{file:it.file, line:r.line, old, new:neu},
+    ai_note:"Applicata a mano al file (Applica al .tex)"}));
+  undoStack.push(it.id); renderList(); drawHighlights();
+  toast(`${it.id} applicata in ${it.file.split("/").pop()}:${r.line} · ricompilo…  (Ctrl+Z annulla)`, 4000);
+  $("#bCompile").click();
+}
+async function unaccept(it){
+  const a = it.applied;
+  const r = await api("/api/edit/undo","POST",{file:a.file, line:a.line, old:a.old, new:a.new});
+  if(!r.ok) return toast(r.error || "Non riesco ad annullare: il testo nel file è cambiato", 6000);
+  undoStack = undoStack.filter(x=>x!==it.id);
+  Object.assign(it, await api("/api/items/"+it.id,"PATCH",{status:"open", applied:null, ai_note:null}));
+  renderList(); drawHighlights();
+  toast(`${it.id} riaperta, file ripristinato · ricompilo…`, 3000);
   $("#bCompile").click();
 }
 async function undoEdit(it){
@@ -1278,6 +1393,69 @@ $("#sendOpts").addEventListener("click", async e=>{
   if(e.target.closest("[data-md]")){ e.target.closest("li").classList.add("ok"); setChatKind("report"); toast("Download del report avviato"); }
 });
 $("#bPrompt").onclick = openSend;
+
+// ---------------------------------------------------------------- revisori umani
+let author = ""; try{ author = localStorage.getItem("r2k-author") || ""; }catch(e){}
+function shareLinks(){
+  const n = items.filter(i=>i.action!=="edit" && !["done","skipped"].includes(i.status)).length;
+  $("#shCount").textContent = n ? `${n} ${n===1?"nota":"note"} in un file .r2k.json.` : "Non hai ancora note: seleziona del testo nel PDF.";
+  $("#shExport").href = withP("/api/share?author=" + encodeURIComponent(author));
+  $("#shExport").classList.toggle("ghost", !n);
+}
+function openShare(){
+  $("#shName").value = author;
+  $("#shPdf").href = withP("/pdf?dl=1");
+  shareLinks();
+  document.querySelectorAll("#share .steps li").forEach(li=>li.classList.remove("ok"));
+  toggleModal("share", true);
+}
+$("#bShare").onclick = openShare;
+$("#shName").oninput = e=>{ author = e.target.value.trim(); try{ localStorage.setItem("r2k-author", author); }catch(_){} shareLinks(); };
+$("#shPdf").onclick = e=>{ e.target.closest("li").classList.add("ok"); toast("Download del PDF avviato"); };
+$("#shExport").onclick = e=>{
+  if(!author){ e.preventDefault(); $("#shName").focus(); return toast("Scrivi prima il tuo nome"); }
+  e.target.closest("li").classList.add("ok"); $("#shName").closest("li").classList.add("ok"); toast("Note esportate: mandale all'autore");
+};
+$("#shImport").onclick = ()=>$("#shFile").click();
+$("#shFile").onchange = e=>{ const f = e.target.files[0]; e.target.value = ""; if(f) importNotes(f); };
+
+// le coordinate PDF (per SyncTeX) si ricavano dai rettangoli normalizzati: la persona poteva avere solo il PDF
+async function ptOf(page, rects){
+  const r = (rects||[]).find(x=>x.page==page) || (rects||[])[0];
+  if(!r || !pdf || !page || page > pdf.numPages) return null;
+  const vp = (await pdf.getPage(+page)).getViewport({scale:1});
+  return {page:+page, x: r.x*vp.width + 2, y: (r.y + r.h/2)*vp.height};
+}
+async function importNotes(file){
+  let pack;
+  try{ pack = JSON.parse(await file.text()); }catch(e){ return toast("Il file non è leggibile: serve il .r2k.json esportato da Revision2000", 5000); }
+  if(pack.format !== "revision2000-review") return toast("Non è un file di note di Revision2000", 5000);
+  if(!(pack.items||[]).length) return toast(`${pack.author||"Il file"}: nessuna nota da importare`);
+  toast(`Collego ${pack.items.length} note di ${pack.author} ai sorgenti…`, 60000);
+  for(const it of pack.items){
+    it.pt = await ptOf(it.page, it.rects);
+    if(it.dest) it.dest.pt = await ptOf(it.dest.page, it.dest.rects);
+  }
+  const r = await api("/api/import","POST",pack);
+  if(!r.ok) return toast(r.error || "Importazione non riuscita", 5000);
+  toggleModal("share", false);
+  await refreshItems();
+  if(view!=="open") $('#fSeg [data-v="open"]').click();
+  const msg = [`${r.added} ${r.added===1?"nota importata":"note importate"} da ${r.author}`];
+  if(r.dupes) msg.push(`${r.dupes} già presenti`);
+  if(r.unanchored) msg.push(`${r.unanchored} non collegate al sorgente`);
+  if(r.same_pdf===false) msg.push("attenzione: il suo PDF è una versione diversa dal tuo, controlla le evidenziazioni");
+  toast(msg.join(" · "), r.same_pdf===false || r.unanchored ? 8000 : 4000);
+}
+// trascinare un .r2k.json sulla finestra lo importa
+const isJsonDrag = e=>PID && [...(e.dataTransfer?.items||[])].some(i=>i.kind==="file" && (i.type==="application/json" || i.type===""));
+addEventListener("dragover", e=>{ if(isJsonDrag(e)){ e.preventDefault(); document.body.classList.add("dropjson"); } });
+addEventListener("dragleave", e=>{ if(!e.relatedTarget) document.body.classList.remove("dropjson"); });
+addEventListener("drop", e=>{
+  document.body.classList.remove("dropjson");
+  const f = [...(e.dataTransfer?.files||[])].find(f=>/\.json$/i.test(f.name));
+  if(PID && f){ e.preventDefault(); importNotes(f); }
+});
 $("#bCompile").onclick = async ()=>{
   const b=$("#bCompile"); if(b.classList.contains("busy")) return;
   b.classList.add("busy"); b.querySelector("span").textContent="Compilo…"; toast("Compilazione in corso…", 60000);
