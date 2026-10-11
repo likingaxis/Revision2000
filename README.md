@@ -200,7 +200,7 @@ da macro). L'AI userà la riga indicata da SyncTeX.
 Nella barra: progetti, strumenti (Testo, Area, Modifica), nota generale, zoom, ricarica PDF, compila,
 pagina corrente, **Guida** (ⓘ, con il *tour guidato* che parte da solo la prima volta che apri un
 progetto), scorciatoie (**?**) e lo slider del tema (chiaro / seppia / scuro, vale anche per il PDF).
-Con un **doppio clic su un tema** regoli come appare il PDF in quel tema: luminosità del foglio
+Cliccando di nuovo il **tema già attivo** regoli come appare il PDF in quel tema: luminosità del foglio
 (o dello sfondo, nello scuro), contrasto del testo e calore. Ogni tema ricorda le sue regolazioni;
 *Ripristina* torna ai valori iniziali.
 Quando riapri un progetto riparti dalla pagina in cui eri rimasto. La barra si può spostare:

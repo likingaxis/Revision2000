@@ -273,12 +273,16 @@ body.editmode .textLayer span:hover{background:color-mix(in srgb,var(--edit) 14%
 .diff.src del,.diff.src ins{font:12px/1.5 "JetBrains Mono",Consolas,monospace}
 
 /* selezione per l'invio e posticipate */
-/* casella quadrata (= scelta per l'invio), non un cerchio pieno che sembrava "fatta" */
-.item .h .pick{width:17px;height:17px;border-radius:5px;border:1.5px solid color-mix(in srgb,var(--ink) 30%,transparent);display:grid;place-items:center;flex:none;color:transparent;margin-right:2px;
-  transition:background-color .2s,border-color .2s,color .2s,transform .25s cubic-bezier(.3,1.4,.5,1)}
-.item .h .pick:hover{border-color:var(--ink)}
-.item .h .pick.on{background:var(--ink);border-color:var(--ink);color:var(--card)}
-.item .h .pick svg{width:11px;height:11px;stroke-width:2.8}
+/* casella "nel prossimo invio": compare passando sulla scheda (o sempre, se qualcuna è esclusa) */
+.item .h .pick{width:0;height:16px;margin-right:-8px;opacity:0;overflow:hidden;border-radius:5px;border:1.5px solid color-mix(in srgb,var(--ink) 28%,transparent);
+  display:grid;place-items:center;flex:none;color:transparent;
+  transition:width .22s cubic-bezier(.2,.8,.2,1),margin .22s cubic-bezier(.2,.8,.2,1),opacity .18s,background-color .2s,border-color .2s}
+.item:hover .h .pick,.item.unsel .h .pick,#list.partial .item .h .pick,.item .h .pick:focus-visible{width:16px;margin-right:0;opacity:1}
+.item .h .pick:hover{border-color:var(--replace)}
+.item .h .pick.on{background:var(--replace);border-color:var(--replace);color:#fff}
+.item .h .pick svg{width:11px;height:11px;stroke-width:3}
+.item .h .pick.just svg path{stroke-dasharray:22;animation:drawck .32s .05s ease both}
+@keyframes drawck{from{stroke-dashoffset:22}to{stroke-dashoffset:0}}
 .item.unsel{opacity:.6}
 .item.unsel:hover{opacity:.85}
 .item.later{opacity:.7;border:1.5px dashed var(--line);box-shadow:none}
@@ -364,7 +368,10 @@ body.dropjson #viewer::after{content:"Rilascia per importare le note";position:f
 .tag{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--ink);font-size:12.5px}
 .tag::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 18%,transparent)}
 .item .st{margin-left:auto;font-size:11px;font-weight:600;border-radius:999px;padding:1px 8px;background:var(--sunken);color:var(--mut)}
-.item .st.prio{background:color-mix(in srgb,var(--delete) 14%,transparent);color:var(--delete)}
+.item .prio{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:var(--mut)}
+.item .prio .i{width:13px;height:13px;stroke-width:2}
+.item .prio.hi{color:var(--delete)}
+.item .prio.hi .i{fill:color-mix(in srgb,var(--delete) 30%,transparent)}
 .item .q{margin:8px 0 2px;color:var(--ink-2);font-size:13px;max-height:4.4em;overflow:hidden;border-left:2px solid var(--line);padding-left:10px}
 .item .n{white-space:pre-wrap;margin-top:6px;font-size:13.5px}
 .item .sub{margin-top:6px;font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px}
@@ -400,6 +407,24 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
 #pop .row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:12px;font-size:12.5px;color:var(--mut)}
 #pop .row .sp{flex:1 1 0;min-width:0}
 #pop .row .pill-select{padding-top:7px;padding-bottom:7px}
+/* priorità: pulsante con bandierina e menu a comparsa */
+.prsel{position:relative}
+#prioBtn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px 7px 10px;border-radius:999px;background:var(--sunken);color:var(--ink-2);font-weight:500;font-size:12.5px;transition:background-color .2s,color .2s}
+#prioBtn:hover{color:var(--ink)}
+#prioBtn .i{width:15px;height:15px;stroke-width:2;transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
+#prioBtn[data-v=alta]{color:var(--delete);background:color-mix(in srgb,var(--delete) 12%,var(--sunken))}
+#prioBtn[data-v=alta] .i{fill:color-mix(in srgb,var(--delete) 30%,transparent)}
+#prioBtn.wave .i{animation:flagwave .5s ease}
+@keyframes flagwave{30%{transform:rotate(-14deg) scale(1.15)}60%{transform:rotate(8deg)}}
+.prmenu{position:absolute;left:0;bottom:calc(100% + 6px);min-width:170px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-l);padding:4px;
+  display:none;opacity:0;transform:translateY(4px) scale(.97);transform-origin:bottom left;transition:opacity .14s,transform .18s cubic-bezier(.2,.9,.25,1.15);z-index:5}
+.prmenu.show{opacity:1;transform:none}
+.prmenu button{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border-radius:10px;font-size:12.5px;color:var(--ink-2);text-align:left}
+.prmenu button:hover{background:var(--sunken);color:var(--ink)}
+.prmenu button .i{width:15px;height:15px;stroke-width:2}
+.prmenu button.on{color:var(--ink);font-weight:600}
+.prmenu button[data-v=alta] .i{color:var(--delete);fill:color-mix(in srgb,var(--delete) 30%,transparent)}
+.prmenu button small{margin-left:auto;color:var(--mut);font-size:11px;font-weight:400}
 #popSave{display:inline-flex;align-items:center;gap:8px;background:var(--pri);color:var(--pri-ink);border-radius:999px;padding:8px 10px 8px 16px;font-weight:600;font-size:13px;white-space:nowrap}
 #popSave kbd{background:color-mix(in srgb,var(--pri-ink) 18%,transparent);color:inherit;box-shadow:none;font-size:11px}
 #pop .switch{white-space:nowrap}
@@ -534,24 +559,41 @@ body.resizing #viewer{pointer-events:none}
 #pop,#edpop{transform-origin:var(--ax,28px) top}
 #pop.above,#edpop.above{transform-origin:var(--ax,28px) bottom;transform:translateY(-8px) scale(.96)}
 #pop.show,#edpop.show{transform:none}
-/* tipo di revisione: 5 azioni principali in un controllo segmentato, le altre in una riga discreta */
+/* tipo di revisione: un'unica griglia, le 5 azioni principali sopra (grandi) e le altre 5 sotto (piccole);
+   un solo indicatore scorre tra tutte */
 #chips{display:block;margin-bottom:10px}
 #chips .seg5{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:var(--sunken);border-radius:16px;padding:4px}
-#chips .ind{position:absolute;left:0;top:4px;bottom:4px;border-radius:12px;background:var(--card);pointer-events:none;
-  box-shadow:0 1px 2px rgba(0,0,0,.08),0 4px 12px -4px rgba(0,0,0,.18);transition:transform .32s cubic-bezier(.3,1.25,.5,1),width .32s,opacity .2s}
+#chips .dv{grid-column:1/-1;height:1px;margin:2px 10px;background:color-mix(in srgb,var(--ink) 8%,transparent)}
+#chips .ind{position:absolute;left:0;top:0;border-radius:12px;background:var(--card);pointer-events:none;
+  box-shadow:0 1px 2px rgba(0,0,0,.08),0 4px 12px -4px rgba(0,0,0,.18);
+  transition:transform .38s cubic-bezier(.3,1.2,.5,1),width .3s cubic-bezier(.3,1.2,.5,1),height .3s cubic-bezier(.3,1.2,.5,1),opacity .2s}
 #chips .ind.off{opacity:0}
 #chips .ab{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 2px 7px;border-radius:12px;
   font-size:12px;font-weight:500;color:var(--ink-2);transition:color .2s}
-#chips .ab .i{width:19px;height:19px;transition:color .2s,transform .3s cubic-bezier(.3,1.5,.5,1)}
+#chips .ab.sm{padding:6px 2px 5px;gap:3px;font-size:11px}
+#chips .ab span{white-space:nowrap}
+#chips .ab .i{width:19px;height:19px;transition:color .2s,transform .25s cubic-bezier(.3,1.5,.5,1)}
+#chips .ab.sm .i{width:16px;height:16px}
 #chips .ab:hover{color:var(--ink)}
+#chips .ab:hover .i{transform:translateY(-1.5px)}
 #chips .ab.on{color:var(--ink)}
-#chips .ab.on .i{color:var(--c);transform:scale(1.1)}
-#chips .more{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;margin-top:8px;padding:0 4px;font-size:12.5px}
-#chips .more .lb{color:var(--mut);margin-right:4px}
-#chips .mb{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;color:var(--ink-2);transition:background-color .2s,color .2s}
-#chips .mb::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c)}
-#chips .mb:hover{background:var(--sunken);color:var(--ink)}
-#chips .mb.on{background:color-mix(in srgb,var(--c) 16%,transparent);color:color-mix(in srgb,var(--c) 75%,var(--ink));font-weight:600}
+#chips .ab.on .i{color:var(--c);transform:scale(1.1);animation:ic-pop .45s cubic-bezier(.3,1.5,.5,1) both}
+/* un piccolo gesto diverso per ogni azione, quando la scegli */
+#chips .ab.on[data-a=replace] .i{animation-name:ic-swap}
+#chips .ab.on[data-a=delete] .i{animation-name:ic-shake}
+#chips .ab.on[data-a=insert] .i,#chips .ab.on[data-a=cite] .i{animation-name:ic-hop}
+#chips .ab.on[data-a=rewrite] .i{animation-name:ic-spark}
+#chips .ab.on[data-a=comment] .i,#chips .ab.on[data-a=check] .i{animation-name:ic-tilt}
+#chips .ab.on[data-a=move] .i{animation-name:ic-slide}
+#chips .ab.on[data-a=like] .i{animation:ic-beat .7s ease both}
+@keyframes ic-pop{0%{transform:scale(.7)}60%{transform:scale(1.22)}100%{transform:scale(1.1)}}
+@keyframes ic-swap{0%{transform:scale(1) rotateY(0)}50%{transform:scale(1.15) rotateY(180deg)}100%{transform:scale(1.1) rotateY(360deg)}}
+@keyframes ic-shake{0%,100%{transform:scale(1.1)}20%{transform:scale(1.15) translateX(-3px)}40%{transform:scale(1.15) translateX(3px)}60%{transform:scale(1.12) translateX(-2px)}80%{transform:scale(1.1) translateX(1px)}}
+@keyframes ic-hop{0%{transform:scale(1)}40%{transform:scale(1.15) translateY(-5px)}70%{transform:scale(1.1) translateY(1px)}100%{transform:scale(1.1)}}
+@keyframes ic-spark{0%{transform:scale(.8) rotate(-25deg)}60%{transform:scale(1.25) rotate(10deg)}100%{transform:scale(1.1) rotate(0)}}
+@keyframes ic-tilt{0%,100%{transform:scale(1.1)}25%{transform:scale(1.18) rotate(-12deg)}55%{transform:scale(1.14) rotate(9deg)}80%{transform:scale(1.1) rotate(-3deg)}}
+@keyframes ic-slide{0%{transform:scale(1)}45%{transform:scale(1.12) translateX(4px)}75%{transform:scale(1.1) translateX(-1px)}100%{transform:scale(1.1)}}
+@keyframes ic-beat{0%{transform:scale(1)}15%{transform:scale(1.35)}30%{transform:scale(1)}45%{transform:scale(1.25)}70%,100%{transform:scale(1.1)}}
 #popLbl{display:none}
 #popHelp{margin:0 4px 8px;color:var(--mut)}
 #popHelp::before{display:none}
@@ -779,7 +821,7 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
 .fchips button{background:var(--sunken);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-2);font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:background-color .15s,color .15s}
 .fchips button i{width:7px;height:7px;border-radius:50%;background:var(--c)}
 .fchips button.on{background:var(--pri);color:var(--pri-ink)}
-/* regolazione del PDF per tema (doppio clic sul tema) */
+/* regolazione del PDF per tema (clic sul tema già attivo) */
 #tone{position:fixed;z-index:60;width:290px;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-l);padding:14px 16px 12px;display:none;opacity:0;
   transform:scale(.95);transition:opacity .15s,transform .22s cubic-bezier(.2,.9,.25,1.15)}
 #tone.show{opacity:1;transform:none}
@@ -877,6 +919,11 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
   <symbol id="i-a-delete" viewBox="0 0 24 24"><path d="M3.5 12h17"/><path d="M16 7.6C15.4 6 13.9 5 12 5c-2.3 0-4 1.3-4 3.2 0 1.2.7 2.1 2 2.8M8 16.4C8.6 18 10.1 19 12.2 19c2.4 0 4.1-1.3 4.1-3.2 0-.7-.2-1.3-.6-1.8"/></symbol>
   <symbol id="i-a-insert" viewBox="0 0 24 24"><path d="M5 20l7-8.5 7 8.5M12 3v5.5M9.2 5.7h5.6"/></symbol>
   <symbol id="i-a-rewrite" viewBox="0 0 24 24"><path d="M4 6.5h10M4 11.5h7M4 16.5h9"/><path d="M18 10.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></symbol>
+  <symbol id="i-a-cite" viewBox="0 0 24 24"><path d="M10 7.5H6.5a1.5 1.5 0 0 0-1.5 1.5v3a1.5 1.5 0 0 0 1.5 1.5H9c0 2-1 3.2-3 3.8M19 7.5h-3.5A1.5 1.5 0 0 0 14 9v3a1.5 1.5 0 0 0 1.5 1.5H18c0 2-1 3.2-3 3.8"/></symbol>
+  <symbol id="i-a-check" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 4.5 4.5M8 10.6l1.8 1.8 3.2-3.4"/></symbol>
+  <symbol id="i-a-move" viewBox="0 0 24 24"><path d="M5 7h9a4 4 0 0 1 0 8H6"/><path d="m9 11.5-3.5 3.5L9 18.5"/></symbol>
+  <symbol id="i-a-layout" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M4 9.5h16M10 9.5V20"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 20.5V4.5M6 5c3.5-2 6.5 2 11 0v8c-4.5 2-7.5-2-11 0"/></symbol>
   <symbol id="i-tex" viewBox="0 0 24 24"><path d="M4 6h7M7.5 6v12M11 10h5l-1.5 4L16 18h-5M16 6l4 6-4 6"/></symbol>
 </svg>
 
@@ -903,9 +950,9 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
   <button class="rb" id="bInfo" title="Come funziona"><svg class="i"><use href="#i-info"/></svg><span>Guida</span></button>
   <button class="rb" id="bKeys" title="Scorciatoie da tastiera (?)"><svg class="i"><use href="#i-keys"/></svg><span>Tasti</span></button>
   <div class="tslider v" data-theme-slider><span class="knob"></span>
-    <button data-t="light" title="Tema chiaro (doppio clic: regola il PDF)"><svg class="i"><use href="#i-sun"/></svg></button>
-    <button data-t="sepia" title="Tema seppia (doppio clic: regola il PDF)"><svg class="i"><use href="#i-cup"/></svg></button>
-    <button data-t="dark" title="Tema scuro (doppio clic: regola il PDF)"><svg class="i"><use href="#i-moon"/></svg></button>
+    <button data-t="light" title="Tema chiaro (cliccalo di nuovo per regolare il PDF)"><svg class="i"><use href="#i-sun"/></svg></button>
+    <button data-t="sepia" title="Tema seppia (cliccalo di nuovo per regolare il PDF)"><svg class="i"><use href="#i-cup"/></svg></button>
+    <button data-t="dark" title="Tema scuro (cliccalo di nuovo per regolare il PDF)"><svg class="i"><use href="#i-moon"/></svg></button>
   </div>
 </nav>
 
@@ -960,7 +1007,8 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
   <div id="popLbl"></div>
   <textarea id="popText" placeholder=""></textarea>
   <div class="row">
-    <select class="pill-select" id="popPrio" title="Priorità"><option value="normale">Priorità normale</option><option value="alta">Priorità alta</option><option value="bassa">Priorità bassa</option></select>
+    <select id="popPrio" hidden><option value="normale">normale</option><option value="alta">alta</option><option value="bassa">bassa</option></select>
+    <div class="prsel"><button type="button" id="prioBtn" title="Priorità"></button><div class="prmenu" id="prioMenu"></div></div>
     <label class="switch" id="propSw" title="L'AI non modifica: ti propone 3 alternative tra cui scegliere"><input type="checkbox" id="popProp"><i></i>Proponi</label>
     <label class="switch" id="allSw" title="Applica la stessa correzione a tutte le occorrenze"><input type="checkbox" id="popAll"><i></i>Ovunque</label>
     <label class="switch" id="penSw" title="Pennarello: tieni questa azione per le prossime selezioni, senza riquadro (Esc per smettere)"><input type="checkbox" id="popPen"><i></i>Fissa</label>
@@ -975,9 +1023,9 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
     <div><h1>Revision2000</h1><p>Annota il PDF, l'AI applica le correzioni al sorgente.</p></div>
     <button class="hbtn" id="bInfo2"><svg class="i"><use href="#i-info"/></svg>Come funziona</button>
     <div class="tslider h htheme2" data-theme-slider><span class="knob"></span>
-      <button data-t="light" title="Chiaro (doppio clic: regola il PDF)"><svg class="i"><use href="#i-sun"/></svg></button>
-      <button data-t="sepia" title="Seppia (doppio clic: regola il PDF)"><svg class="i"><use href="#i-cup"/></svg></button>
-      <button data-t="dark" title="Scuro (doppio clic: regola il PDF)"><svg class="i"><use href="#i-moon"/></svg></button>
+      <button data-t="light" title="Chiaro (cliccalo di nuovo per regolare il PDF)"><svg class="i"><use href="#i-sun"/></svg></button>
+      <button data-t="sepia" title="Seppia (cliccalo di nuovo per regolare il PDF)"><svg class="i"><use href="#i-cup"/></svg></button>
+      <button data-t="dark" title="Scuro (cliccalo di nuovo per regolare il PDF)"><svg class="i"><use href="#i-moon"/></svg></button>
     </div>
   </div>
   <div class="chips-t" id="tools"></div>
@@ -1022,7 +1070,7 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
   <div class="kr">Rivedi una per una<span><kbd>J</kbd> avanti · <kbd>K</kbd> indietro</span></div>
   <div class="kr">Fatta / Dopo / Elimina<span>trascina la scheda</span></div>
   <div class="kr">Allarga il pannello<span>trascina il suo bordo</span></div>
-  <div class="kr">Regola i colori del PDF<span>doppio clic su un tema</span></div>
+  <div class="kr">Regola i colori del PDF<span>clic sul tema già attivo</span></div>
   <div class="kr">Zoom<span><kbd>Ctrl</kbd> <kbd>+</kbd> / <kbd>−</kbd></span></div>
   <div class="kr">Questo pannello<span><kbd>?</kbd></span></div>
 </div></div>
@@ -1367,7 +1415,7 @@ function openPop(sel, anchorRect){
                           : sel.text ? sel.text.replace(/\s+/g," ").slice(0,220) : `Nota generale · pagina ${sel.pt.page}`;
   $("#popAll").checked=false; $("#popPen").checked=false; $("#popText").value=""; $("#popText").dataset.auto="0"; delete $("#popProp").dataset.touched;
   setAct(sel.area ? "layout" : sel.text ? "replace" : "comment");
-  $("#popPrio").value="normale";
+  setPrio("normale", false);
   const pop=$("#pop"); clearTimeout(pop._h); pop.style.display="block"; pop.classList.remove("show");
   placeActInd(false); placeFloat(pop, anchorRect);
   drawPending(sel);
@@ -1451,22 +1499,21 @@ function setAct(a){
   else if(prev==="replace" && t.dataset.auto==="1"){ t.value=""; t.dataset.auto="0"; }
 }
 function cleanSel(s){ return s.replace(/(\w)-\s*\n\s*(\w)/g,"$1$2").replace(/\s+/g," ").trim(); }
-// le 5 azioni più usate (tasti 1-5) in evidenza, le altre (6-9, 0) in una riga sotto
-const MAIN_ACTS = {replace:"a-replace", delete:"a-delete", insert:"a-insert", rewrite:"a-rewrite", comment:"chat"};
+// le 5 azioni più usate (tasti 1-5) in grande, sotto le altre 5 (6-9, 0): un'unica scelta
+const ACT_ICON = {replace:"a-replace", delete:"a-delete", insert:"a-insert", rewrite:"a-rewrite", comment:"chat",
+                  cite:"a-cite", check:"a-check", move:"a-move", layout:"a-layout", like:"heart"};
 const SHORT = {insert:"Inserisci"};
 function paintChips(){
-  const key = k => (ACTS.findIndex(a=>a[0]===k)+1)%10, tip = k => `${ACTS.find(a=>a[0]===k)[1]} (tasto ${key(k)})`;
-  $("#chips").innerHTML = `<div class="seg5"><span class="ind"></span>${Object.entries(MAIN_ACTS).map(([k,ic])=>
-      `<button class="ab${k===curAct?" on":""}" data-a="${k}" style="--c:${color(k)}" title="${tip(k)}">${icon(ic)}${SHORT[k]||LABEL(k)}</button>`).join("")}</div>
-    <div class="more"><span class="lb">Altro:</span>${ACTS.filter(a=>!MAIN_ACTS[a[0]]).map(([k,l])=>
-      `<button class="mb${k===curAct?" on":""}" data-a="${k}" style="--c:${color(k)}" title="${tip(k)}">${l}</button>`).join("")}</div>`;
+  const tip = (k,i) => `${ACTS[i][1]} (tasto ${(i+1)%10})`;
+  const btn = ([k,l],i) => `<button class="ab${i>=5?" sm":""}${k===curAct?" on":""}" data-a="${k}" style="--c:${color(k)}" title="${tip(k,i)}">${icon(ACT_ICON[k])}<span>${SHORT[k]||l}</span></button>`;
+  $("#chips").innerHTML = `<div class="seg5"><span class="ind"></span>${ACTS.slice(0,5).map(btn).join("")}<i class="dv"></i>${ACTS.slice(5).map((a,i)=>btn(a,i+5)).join("")}</div>`;
   placeActInd(false);
 }
 function placeActInd(anim=true){
   const ind = $("#chips .ind"), on = $("#chips .ab.on"); if(!ind) return;
   if(!anim){ ind.style.transition = "none"; requestAnimationFrame(()=>ind.style.transition = ""); }
   ind.classList.toggle("off", !on); if(!on || !on.offsetWidth) return;
-  ind.style.width = on.offsetWidth+"px"; ind.style.transform = `translateX(${on.offsetLeft}px)`;
+  ind.style.width = on.offsetWidth+"px"; ind.style.height = on.offsetHeight+"px"; ind.style.transform = `translate(${on.offsetLeft}px,${on.offsetTop}px)`;
 }
 const actByKey = k => ACTS[k==="0" ? 9 : +k-1];
 const PROPOSE_DEFAULT = ["comment","rewrite"];   // osservazioni aperte: meglio scegliere tra alternative
@@ -1530,6 +1577,22 @@ document.addEventListener("mousedown", e=>{
   if(edOpen() && !$("#edpop").contains(e.target)) closeEd();
 });
 $("#popSave").onclick = savePending;
+const PRIO = {alta:["Alta","importante"], normale:["Normale",""], bassa:["Bassa","non urgente"]};
+function setPrio(v, anim=true){
+  $("#popPrio").value = v; const b = $("#prioBtn"); b.dataset.v = v;
+  b.innerHTML = `${icon("flag")}${v==="normale" ? "Priorità" : "Priorità "+PRIO[v][0].toLowerCase()}`;
+  if(anim){ b.classList.remove("wave"); void b.offsetWidth; b.classList.add("wave"); }
+}
+function togglePrioMenu(on){
+  const m = $("#prioMenu"); on = on ?? !m.classList.contains("show"); clearTimeout(m._h);
+  if(on){ const v = $("#popPrio").value;
+    m.innerHTML = ["alta","normale","bassa"].map(k=>`<button type="button" data-v="${k}" class="${k===v?"on":""}">${icon("flag")}${PRIO[k][0]}${PRIO[k][1]?`<small>${PRIO[k][1]}</small>`:""}</button>`).join("");
+    m.style.display = "block"; requestAnimationFrame(()=>m.classList.add("show")); }
+  else { m.classList.remove("show"); m._h = setTimeout(()=>m.style.display = "none", 160); }
+}
+$("#prioBtn").onclick = e=>{ e.stopPropagation(); togglePrioMenu(); };
+$("#prioMenu").addEventListener("click", e=>{ const b = e.target.closest("[data-v]"); if(!b) return; setPrio(b.dataset.v); togglePrioMenu(false); $("#popText").focus(); });
+$("#pop").addEventListener("mousedown", e=>{ if(!e.target.closest(".prsel")) togglePrioMenu(false); });
 function toggleModal(id, force){
   const k=document.getElementById(id), on = force ?? !k.classList.contains("show");
   clearTimeout(k._h);
@@ -1643,7 +1706,7 @@ function openEdit(it){
   openPop(pending, null);
   $("#popSel").textContent = `Modifica ${it.id}` + (it.pdf_text ? ` · ${it.pdf_text.slice(0,200)}` : "");
   setAct(it.action); $("#popText").value = it.note || ""; $("#popText").dataset.auto="0";
-  $("#popPrio").value = it.priority || "normale"; $("#popAll").checked = it.scope==="all";
+  setPrio(it.priority || "normale", false); $("#popAll").checked = it.scope==="all";
   $("#popProp").checked = it.mode==="propose"; $("#popProp").dataset.touched = "1";
 }
 
@@ -1703,6 +1766,7 @@ function renderList(){
   $("#selbar").innerHTML = view==="open" && open ? `<span><b>${selN}</b> di ${open} nel prossimo invio</span><span class="sp"></span>
     <button data-selall="1">Seleziona tutte</button><button data-selall="0">Nessuna</button>` : "";
   $("#prog").style.width = (revs.length? closed/revs.length*100:0)+"%";
+  $("#list").classList.toggle("partial", selN < open);
   const sn = $("#sendN"), sv = selN ? String(selN) : "";
   if(sn.textContent !== sv){ sn.textContent = sv; sn.classList.remove("bump"); void sn.offsetWidth; sn.classList.add("bump"); }
   const pend = items.filter(i=>["open","proposed","later"].includes(i.status)).length;
@@ -1727,9 +1791,10 @@ function renderList(){
     let st_; const st = it.status==="proposed" ? `<span class="st wait">da scegliere</span>`
       : ["done","skipped"].includes(it.status) ? `<span class="st">${it.status==="done"?"fatta":"saltata"}</span>`
       : it.mode==="propose" && it.status==="open" ? `<span class="st">proposte</span>`
-      : (it.priority==="alta"?`<span class="st prio">alta</span>`:"");
+      : it.priority==="alta" ? `<span class="prio hi" title="Priorità alta">${icon("flag")}Alta</span>`
+      : it.priority==="bassa" ? `<span class="prio lo" title="Priorità bassa">${icon("flag")}Bassa</span>` : "";
     if(it.status==="later") st_ = `<span class="st">posticipata</span>`; else st_ = "";
-    const pick = it.status==="open" ? `<button class="pick${isSel(it)?" on":""}" data-op="sel" title="${isSel(it)?"Inclusa nel prossimo invio: clicca per escluderla":"Esclusa dal prossimo invio: clicca per includerla"}">${icon("check")}</button>` : "";
+    const pick = it.status==="open" ? `<button class="pick${isSel(it)?" on":""}${it.id===renderList._just?" just":""}" data-op="sel" title="${isSel(it)?"Inclusa nel prossimo invio: clicca per escluderla":"Esclusa dal prossimo invio: clicca per includerla"}">${icon("check")}</button>` : "";
     return `<div class="item ${it.status}${it.status==="open" && !isSel(it)?" unsel":""}${isNew?" new":""}" id="it-${it.id}" data-id="${it.id}" style="--c:${color(it.action)};--k:${isNew?k++:0}">
       <div class="h">${pick}<span class="tag">${LABEL(it.action)}</span><span class="mono">${it.id}</span>${it.author?`<span class="who" title="Segnalata da ${esc(it.author)}">${esc(it.author)}</span>`:""}${st_ || st}</div>
       ${body(it)}
@@ -1772,7 +1837,7 @@ $("#list").addEventListener("click", async e=>{
   if(op==="unedit") return it.applied ? unaccept(it) : undoEdit(it);
   if(op==="accept") return acceptItem(it, card);
   if(op==="aidiff") return openReview(aiHunk(it));
-  if(op==="sel"){ Object.assign(it, await api("/api/items/"+it.id,"PATCH",{selected: !isSel(it)})); renderList(); return; }
+  if(op==="sel"){ Object.assign(it, await api("/api/items/"+it.id,"PATCH",{selected: !isSel(it)})); renderList._just = it.id; renderList(); renderList._just = null; return; }
   if(op==="later" || op==="resume") return cardOp(it, card, op);
   if(op==="toggle") return cardOp(it, card, isActive(it) ? "done" : "reopen");
   if(op==="edit") return openEdit(it);
@@ -1963,7 +2028,7 @@ function placeThemeKnobs(t){
     sl.querySelector(".knob").style.transform = sl.classList.contains("v") ? `translateY(${i*36}px)` : `translateX(${i*36}px)`;
   });
 }
-// colori del PDF per tema, regolabili con un doppio clic sul tema:
+// colori del PDF per tema, regolabili cliccando il tema già attivo:
 // L = luminosità del foglio, K = contrasto dell'inchiostro, W = calore (0 neutro, 100 crema)
 const TONE_DEF = {light:{L:100,K:100,W:0}, sepia:{L:91,K:85,W:100}, dark:{L:11,K:88,W:0}};
 const TONE_MIN = {light:70, sepia:60, dark:2}, TONE_MAX = {light:100, sepia:100, dark:32};
@@ -2032,15 +2097,20 @@ $("#tone").addEventListener("click", e=>{
   paintTone();
 });
 document.addEventListener("pointerdown", e=>{ if(toneOpen() && !e.target.closest("#tone,[data-theme-slider]")) closeTone(); });
-// doppio clic sul tema: lo riconosco a mano perché durante l'animazione del cambio tema
-// il secondo clic non arriva al pulsante (lo cattura la transizione)
-let themeClick = null;
-function themeDbl(e, t, btn){
-  const l = themeClick, now = performance.now();
-  if(l && now - l.at < 450 && Math.hypot(e.clientX - l.x, e.clientY - l.y) < 14 && (!t || t === l.t)){ themeClick = null; openTone(l.t, l.b); return true; }
-  themeClick = t ? {t, b:btn, at:now, x:e.clientX, y:e.clientY} : null; return false;
+// clic su un tema: se è già quello attivo apre le regolazioni del PDF, altrimenti lo attiva
+function themeClick(t, btn, e){
+  const cur = setTheme._to || document.documentElement.dataset.theme;
+  if(t === cur){ if(toneOpen() && $("#tone").dataset.t === t) closeTone(); else openTone(t, btn); return; }
+  setTheme(t, e);
 }
-document.addEventListener("click", e=>{ if(themeClick && !e.target.closest("[data-theme-slider]")) themeDbl(e); }, true);
+// durante l'animazione del cambio tema i clic li cattura la transizione: li riporto al pulsante sotto il puntatore,
+// così si può cambiare tema subito senza aspettare
+document.addEventListener("click", e=>{
+  if(!document.documentElement.classList.contains("vt-theme") || e.target.closest("[data-theme-slider]")) return;
+  const b = [...document.querySelectorAll("[data-theme-slider] button")].find(x=>{ const r = x.getBoundingClientRect();
+    return r.width && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; });
+  if(b){ e.stopPropagation(); themeClick(b.dataset.t, b, e); }
+}, true);
 
 function setTheme(t, ev){
   if(!["light","sepia","dark"].includes(t)) t = "light";
@@ -2049,17 +2119,17 @@ function setTheme(t, ev){
   // i colori delle azioni cambiano col tema: ridisegna chip, lista ed evidenziazioni
   const apply = ()=>{ root.dataset.theme = t; applyTone(t); placeThemeKnobs(t); paintChips(); renderList(); drawHighlights();
     if(toneOpen() && $("#tone").dataset.t !== t) closeTone(); };
-  if(setTheme._to === t) return;  // secondo clic di un doppio clic: la transizione è già partita
+  if(setTheme._to === t) return;  // la transizione verso questo tema è già partita
   if(ev && document.startViewTransition && root.dataset.theme !== t && !matchMedia("(prefers-reduced-motion: reduce)").matches){
     const x = ev.clientX || innerWidth/2, y = ev.clientY || innerHeight/2, rad = Math.hypot(Math.max(x, innerWidth-x), Math.max(y, innerHeight-y));
     root.classList.add("vt-theme");
-    setTheme._to = t; const tr = document.startViewTransition(apply);
+    const tok = setTheme._tok = {}; setTheme._to = t; const tr = document.startViewTransition(apply);
     tr.ready.then(()=>root.animate({clipPath:[`circle(0px at ${x}px ${y}px)`, `circle(${rad}px at ${x}px ${y}px)`]},
-      {duration:720, easing:"cubic-bezier(.4,0,.2,1)", pseudoElement:"::view-transition-new(root)"})).catch(()=>{});
-    tr.finished.finally(()=>{ root.classList.remove("vt-theme"); setTheme._to = null; });
+      {duration:480, easing:"cubic-bezier(.4,0,.2,1)", pseudoElement:"::view-transition-new(root)"})).catch(()=>{});
+    tr.finished.finally(()=>{ if(setTheme._tok !== tok) return; root.classList.remove("vt-theme"); setTheme._to = null; });
   } else apply();
 }
-document.querySelectorAll("[data-theme-slider]").forEach(sl=>sl.addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; setTheme(b.dataset.t, e); themeDbl(e, b.dataset.t, b); }));
+document.querySelectorAll("[data-theme-slider]").forEach(sl=>sl.addEventListener("click", e=>{ const b=e.target.closest("button"); if(b) themeClick(b.dataset.t, b, e); }));
 let savedTheme = "light"; try{ savedTheme = localStorage.getItem("r2k-theme") || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"); }catch(e){}
 setTheme(savedTheme);
 
