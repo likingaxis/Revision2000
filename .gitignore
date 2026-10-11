@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Dati locali dell'app (revisioni e build di eventuali progetti di prova)
+_review/
+build/
+
+# Editor / OS / strumenti
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Immagini di riferimento usate per il design (non fanno parte dell'app)
+UI REFERENCE/
