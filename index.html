@@ -27,13 +27,20 @@ try{ document.documentElement.dataset.theme = localStorage.getItem("r2k-theme") 
   --replace:#3b6fd9; --delete:#d9534f; --insert:#2e9e6a; --rewrite:#8b5cf6; --comment:#cf9a12;
   --cite:#0e9aa7; --check:#e8743b; --move:#6b7280; --general:#52525b; --layout:#c2410c; --like:#db2777; --edit:#0f766e;
 }
+/* seppia: a metà tra chiaro e scuro. Interfaccia calda e attenuata (né bianca né nera),
+   foglio color crema smorzato con inchiostro marrone: meno abbagliante del bianco, più leggibile dell'inversione */
 :root[data-theme="sepia"]{
-  --bg:#e7dfcf; --surface:#f5efe3; --card:#fbf7ef; --sunken:#ece3d2;
-  --ink:#2f261d; --ink-2:#5a4c3d; --mut:#968672; --line:#e3d8c4;
-  --rail:#2a231d; --rail-ink:#b9ab98;
-  --pri:#2f261d; --pri-ink:#fbf7ef;
-  --paper:#f8f1e3; --pdf-filter:sepia(.42) contrast(.94) brightness(.98);
-  --ai-bg:#ebeed9; --ai-ink:#4b5a1f;
+  --bg:#352e27; --surface:#3d352d; --card:#443b32; --sunken:#2f2923;
+  --ink:#f1e6d2; --ink-2:#d2c3aa; --mut:#a39279; --line:#51463b;
+  --rail:#241f1a; --rail-ink:#b3a48e; --rail-hover:rgba(255,236,205,.08);
+  --pri:#f0e1c4; --pri-ink:#2e2721;
+  --paper:#e9dbc1; --pdf-filter:url(#r2k-sepia); --hl-blend:multiply; --hl-op:.34;
+  --shadow-s:0 1px 2px rgba(15,9,3,.3);
+  --shadow:0 1px 2px rgba(15,9,3,.3),0 10px 26px -8px rgba(15,9,3,.45);
+  --shadow-l:0 2px 8px rgba(15,9,3,.35),0 26px 64px -12px rgba(15,9,3,.6);
+  --ai-bg:#36402a; --ai-ink:#cfe0a8;
+  --replace:#5f8cf0; --delete:#f0716b; --insert:#3fb87e; --rewrite:#a07ffb; --comment:#e2b232;
+  --cite:#26b4bf; --check:#f4884c; --move:#a89f92; --general:#b9ad9b; --layout:#ef7f38; --like:#ec5fa0; --edit:#22b8a4;
 }
 :root[data-theme="dark"]{
   --bg:#0c0c0e; --surface:#151518; --card:#1c1c20; --sunken:#121215;
@@ -382,10 +389,10 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
 #pop .switch{white-space:nowrap}
 .switch{display:inline-flex;align-items:center;gap:7px;cursor:pointer;user-select:none;color:var(--ink-2);font-weight:500}
 .switch input{display:none}
-.switch i{width:30px;height:18px;border-radius:999px;background:var(--line);position:relative;transition:background-color .25s}
+.switch i{width:30px;height:18px;border-radius:999px;background:color-mix(in srgb,var(--ink) 20%,transparent);position:relative;transition:background-color .25s}
 .switch i::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .3s cubic-bezier(.3,1.3,.5,1)}
 .switch input:checked + i{background:var(--pri)}
-.switch input:checked + i::after{transform:translateX(12px)}
+.switch input:checked + i::after{transform:translateX(12px);background:var(--pri-ink)}
 .hint{display:flex;gap:4px;align-items:center}
 
 /* ---------------------------------------------------------------- toast & banner */
@@ -777,6 +784,8 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute">
+  <!-- tema seppia: il bianco del PDF diventa crema, il nero un marrone scuro -->
+  <filter id="r2k-sepia" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values=".745 0 0 0 .169  0 .737 0 0 .122  0 0 .675 0 .082  0 0 0 1 0"/></filter>
   <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 1.5c.5 5.6 4.9 10 10.5 10.5-5.6.5-10 4.9-10.5 10.5C11.5 16.9 7.1 12.5 1.5 12 7.1 11.5 11.5 7.1 12 1.5z"/></symbol>
   <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></symbol>
   <symbol id="i-note" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7.5L14 20H6.5A2.5 2.5 0 0 1 4 17.5z"/><path d="M14 20v-3.5a2.5 2.5 0 0 1 2.5-2.5H20M8.5 9h7M8.5 12.5h4"/></symbol>
@@ -2164,7 +2173,7 @@ function ctx(t){ return t.length > 260 ? esc(t.slice(0,110)) + `<span class="ell
 function openReview(focus){
   const hs = CHG.hunks;
   $("#rvLead").textContent = hs.length ? `Dall'invio del ${when(CHG.taken)}: ${hs.length} ${hs.length===1?"modifica":"modifiche"}. Tieni quelle giuste, annulla le altre.`
-                                       : "Nessuna modifica da controllare.";
+                                       : "L'AI non ha cambiato niente dall'ultimo invio.";
   $("#rvKeepAll").style.display = hs.length ? "" : "none";
   const files = [...new Set(hs.map(h=>h.file))]; let k = 0;
   $("#rvList").innerHTML = files.map(f=>`<div class="rvf"><div class="rvfh">${icon("tex")}<b>${esc(chapterName(f))}</b><span class="mono">${esc(f)}</span></div>` +
