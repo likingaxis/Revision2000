@@ -22,7 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-__version__ = "1.8.0"
+__version__ = "1.9.0"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
@@ -150,13 +150,19 @@ class Project:
             self.save({"project": str(self.root), "kind": kind, "main": main, "items": []})
 
     def info(self):
-        n_open = 0
+        n_open = n_done = n_all = 0
+        updated = None
         try:
-            n_open = sum(1 for i in self.load()["items"] if i.get("status", "open") == "open")
+            its = [i for i in self.load()["items"] if i.get("action") not in ("like", "edit")]
+            n_open = sum(1 for i in its if i.get("status", "open") == "open")
+            n_done = sum(1 for i in its if i.get("status") in ("done", "skipped"))
+            n_all = len(its)
+            updated = max(self.json_path.stat().st_mtime, self.pdf.stat().st_mtime if self.pdf.exists() else 0)
         except Exception:
             pass
         return {"id": self.id, "kind": self.kind, "name": self.name, "root": str(self.root),
-                "main": self.main, "has_pdf": self.pdf.exists(), "open": n_open}
+                "main": self.main, "has_pdf": self.pdf.exists(), "open": n_open, "done": n_done, "total": n_all,
+                "updated": updated}
 
     # ------------------------------------------------------------ storage
     def load(self):
