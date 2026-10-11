@@ -22,6 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+__version__ = "1.1.0"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
@@ -446,11 +447,22 @@ def browse(path):
 
 
 PICK_TK = r"""
-import tkinter as tk
+import sys, tkinter as tk
 from tkinter import filedialog
-r = tk.Tk(); r.withdraw(); r.attributes("-topmost", True); r.update()
-p = filedialog.askdirectory(title="Scegli la cartella del progetto LaTeX", mustexist=True)
-print(p or "")
+# finestra "proprietaria" invisibile e sempre in primo piano: il dialogo eredita il topmost
+r = tk.Tk(); r.overrideredirect(True); r.attributes("-alpha", 0.0); r.attributes("-topmost", True)
+r.geometry("1x1+%d+%d" % (r.winfo_screenwidth() // 2 - 300, r.winfo_screenheight() // 2 - 250))
+r.update(); r.lift(); r.focus_force()
+if sys.platform == "win32":  # Windows blocca il primo piano ai processi in background: piccolo trucco con ALT
+    try:
+        import ctypes
+        u = ctypes.windll.user32
+        u.keybd_event(0x12, 0, 0, 0); u.keybd_event(0x12, 0, 2, 0)
+        u.SetForegroundWindow(int(r.wm_frame(), 16))
+    except Exception:
+        pass
+p = filedialog.askdirectory(parent=r, title="Scegli la cartella del progetto LaTeX", mustexist=True)
+sys.stdout.write(p or "")
 """
 
 
@@ -467,7 +479,8 @@ def pick_folder():
         if cmd[0] != sys.executable and not shutil.which(cmd[0]):
             continue
         try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=900, encoding="utf-8", errors="replace",
+                               env=dict(os.environ, PYTHONIOENCODING="utf-8"))
         except Exception:
             continue
         if cmd[0] == sys.executable and "Error" in r.stderr and not r.stdout.strip():
@@ -482,6 +495,21 @@ def pick_folder():
 
 def tools_status():
     return {t: bool(shutil.which(t)) for t in ("pdflatex", "synctex", "bibtex", "biber", "xelatex")}
+
+
+def install_hint():
+    """Comando per installare LaTeX sul sistema corrente (mostrato nella home se manca)."""
+    if os.name == "nt":
+        return "winget install --id MiKTeX.MiKTeX -e"
+    if sys.platform == "darwin":
+        return "brew install --cask mactex-no-gui"
+    for pm, cmd in (("apt", "sudo apt install -y texlive-latex-extra texlive-lang-italian texlive-bibtex-extra biber python3-tk"),
+                    ("dnf", "sudo dnf install -y texlive-scheme-medium biber python3-tkinter"),
+                    ("pacman", "sudo pacman -S --needed texlive-basic texlive-latexextra texlive-langitalian texlive-bibtexextra biber tk"),
+                    ("zypper", "sudo zypper install -y texlive-scheme-medium biber python3-tk")):
+        if shutil.which(pm):
+            return cmd
+    return "./install.sh"
 
 
 # -------------------------------------------------------------------- HTTP
@@ -519,7 +547,8 @@ def make_handler():
                 return self.send(200, (HERE / "index.html").read_bytes(), "text/html; charset=utf-8")
             if u.path == "/api/projects":
                 ps = [get_project(e["id"]) for e in load_registry()]
-                return self.send(200, {"projects": [p.info() for p in ps if p], "tools": tools_status(), "home": str(Path.home())})
+                return self.send(200, {"projects": [p.info() for p in ps if p], "tools": tools_status(), "home": str(Path.home()),
+                                       "install": install_hint(), "version": __version__})
             if u.path == "/api/browse":
                 return self.send(200, browse((q.get("path") or [""])[0]))
             proj = self.proj()
@@ -619,6 +648,7 @@ def main():
     ap.add_argument("--main", default="main.tex")
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--no-browser", action="store_true")
+    ap.add_argument("--version", action="version", version=f"Revision2000 {__version__}")
     a = ap.parse_args()
     url = f"http://127.0.0.1:{a.port}/"
     if a.project:
@@ -632,7 +662,16 @@ def main():
     try:
         srv = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler())
     except OSError:
-        sys.exit(f"Porta {a.port} occupata: REVISION2000 e' forse gia' aperto ({url}). Usa --port per cambiarla.")
+        # probabilmente l'app e' gia' aperta (doppio avvio): basta riaprire il browser
+        try:
+            import urllib.request
+            urllib.request.urlopen(f"http://127.0.0.1:{a.port}/api/projects", timeout=2)
+            print(f"Revision2000 e' gia' in esecuzione: apro {url}")
+            if not a.no_browser:
+                webbrowser.open(url)
+            return
+        except Exception:
+            sys.exit(f"Porta {a.port} occupata da un altro programma. Usa --port per sceglierne un'altra.")
     print(f"REVISION2000 attivo su {url}\nCtrl+C per uscire")
     if not a.no_browser:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()

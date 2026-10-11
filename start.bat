@@ -1,6 +1,14 @@
 @echo off
-REM REVISION2000 - avvio su Windows. Si apre il browser con la schermata progetti.
-REM Puoi anche trascinare una cartella LaTeX su questo file per aprirla direttamente.
+REM Revision2000 - avvio su Windows: si apre il browser con la schermata progetti.
+REM Puoi anche trascinare la cartella di un progetto LaTeX su questo file.
 cd /d "%~dp0"
-where python >nul 2>nul && (python server.py %*) || (py -3 server.py %*)
-pause
+set "PY="
+where python >nul 2>nul && python -c "import sys" >nul 2>nul && set "PY=python"
+if not defined PY where py >nul 2>nul && set "PY=py -3"
+if not defined PY (
+  echo Python non trovato: avvio l'installazione automatica...
+  call install.bat
+  exit /b
+)
+%PY% server.py %*
+if errorlevel 1 pause

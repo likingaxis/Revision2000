@@ -14,6 +14,19 @@ Funziona su **Windows, Linux e macOS**. Nessun pacchetto Python da installare.
 
 ## 1. Installazione
 
+### Automatica (consigliata)
+
+| Sistema | Cosa fare |
+|---|---|
+| Windows | doppio clic su **`install.bat`** (usa `winget`: installa Python e, se vuoi, MiKTeX) |
+| Linux / macOS | `sh install.sh` (riconosce apt, dnf, pacman, zypper o Homebrew; chiede la password per `sudo`) |
+
+LaTeX è facoltativo e lo script chiede prima di installarlo. Se manca Python, `start.bat` e
+`start.sh` avviano l'installazione da soli. Se nella home manca qualche strumento LaTeX, il
+pulsante *Copia il comando per installare LaTeX* copia il comando giusto per il tuo sistema.
+
+### Manuale
+
 ### Requisiti
 
 | Cosa | Serve per | Obbligatorio |
@@ -140,8 +153,9 @@ cambiare testo o azione.
 Il simbolo ⚠ indica una revisione non collegata al testo sorgente (formule, tabelle, testo generato
 da macro). L'AI userà la riga indicata da SyncTeX.
 
-Nella barra laterale: progetti, nota generale, zoom, ricarica PDF, compila e tema
-(chiaro / seppia / scuro, vale anche per il PDF).
+Nella barra laterale: progetti, nota generale, zoom, ricarica PDF, compila, pagina corrente,
+scorciatoie (**?**) e lo slider del tema (chiaro / seppia / scuro, vale anche per il PDF).
+Quando riapri un progetto riparti dalla pagina in cui eri rimasto.
 
 ---
 
@@ -161,7 +175,9 @@ Nella barra laterale: progetti, nota generale, zoom, ricarica PDF, compila e tem
 
 | Problema | Soluzione |
 |---|---|
-| `Porta 8765 occupata` | l'app è già aperta: vai su <http://127.0.0.1:8765>, oppure usa `--port 8800` |
+| Riavvio mentre l'app è già aperta | nessun problema: viene riaperta la scheda esistente |
+| `Porta 8765 occupata da un altro programma` | avvia con `--port 8800` |
+| Clic su *Scegli la cartella* e non succede nulla | la finestra può comparire dietro al browser: controlla la barra delle applicazioni, oppure usa *Non vedi la finestra? Sfoglia qui* |
 | Revisioni con ⚠ o file sbagliato | il PDF non corrisponde ai sorgenti: ricompila e ricarica (⟳ PDF) |
 | `pdflatex non trovato` | installa LaTeX (sezione 1) e riavvia l'app |
 | Su Windows, `perl` non trovato | non serve più: l'app non usa `latexmk` |
