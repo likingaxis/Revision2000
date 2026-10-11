@@ -22,7 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-__version__ = "1.4.1"
+__version__ = "1.5.0"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
@@ -312,7 +312,22 @@ class Project:
 
     # ------------------------------------------------------------ consegna all'AI
     def prompt(self, mode="agent"):
-        """agent: agente con accesso ai file (Claude Code, Cursor...); chat: chat web a cui si carica lo ZIP."""
+        """agent: agente con accesso ai file (Claude Code, Cursor...); chat: chat web a cui si carica lo ZIP;
+        report: chat a cui si allega solo REVIEW.md (i file li ha gia' o li incolla l'utente)."""
+        if mode == "report":
+            if self.kind == "latex":
+                return ("Ti allego il report delle revisioni (file .md) con le revisioni da applicare alla mia tesi LaTeX (file principale: " + self.main + "). "
+                        "Per ogni revisione trovi il file .tex, la riga e il testo sorgente esatto da cercare (\"Sorgente ancorato\"); "
+                        "segui esattamente le istruzioni del report. Lavora sui file del progetto che hai gia' a disposizione: "
+                        "se non li hai, dimmi quali file .tex ti servono e te li incollo. "
+                        "Restituiscimi i file .tex modificati completi oppure, per ogni revisione (con il suo id), il testo originale "
+                        "e il testo nuovo da sostituire. Per le revisioni da proporre (o con indicazioni vaghe) non applicare nulla: "
+                        "mostrami 3 alternative con una breve motivazione. Usa i passaggi in \"Stile dell'autore\" come riferimento "
+                        "di stile. Alla fine elencami le revisioni saltate o dubbie.")
+            return ("Ti allego il report delle revisioni (file .md) con le revisioni annotate sul PDF \"" + self.name + "\" (pagina + testo). "
+                    "Segui le istruzioni del report: per ogni revisione (con il suo id) restituiscimi il testo corretto; "
+                    "per quelle da proporre mostrami 3 alternative. Se ti allego anche il file sorgente, applicale direttamente "
+                    "e restituiscimi il file modificato.")
         if mode == "chat":
             if self.kind == "latex":
                 return ("Ti allego uno ZIP con il mio progetto LaTeX (file principale: " + self.main + ") e la cartella _review/. "
@@ -711,10 +726,15 @@ def make_handler():
                 return self.send(200, d)
             if u.path == "/api/prompt":
                 return self.send(200, {"prompt": proj.prompt((q.get("mode") or ["agent"])[0])})
-            if u.path == "/api/export.zip":
-                data, fname = proj.export_zip()
+            if u.path in ("/api/export.zip", "/api/export.md"):
+                if u.path.endswith(".md"):  # solo il report, senza i file del progetto
+                    proj.write_md(proj.load())
+                    safe = re.sub(r"[^\w.-]+", "_", proj.name).strip("_") or "progetto"
+                    data, fname = proj.md_path.read_bytes(), f"{safe}_revisioni.md"
+                else:
+                    data, fname = proj.export_zip()
                 self.send_response(200)
-                self.send_header("Content-Type", "application/zip")
+                self.send_header("Content-Type", "text/markdown; charset=utf-8" if fname.endswith(".md") else "application/zip")
                 self.send_header("Content-Disposition", f'attachment; filename="{fname}"')
                 self.send_header("Content-Length", str(len(data)))
                 self.end_headers()

@@ -190,7 +190,10 @@ Premi **Invia all'AI** e scegli una delle due strade. La finestra ti guida passo
 **Chat sul web** (ChatGPT, Claude.ai, Gemini…):
 1. *Scarica ZIP*: contiene solo i file del documento (i `.tex` inclusi e le immagini/bibliografie
    che usano), le revisioni in `_review/` e il prompt in `PROMPT.txt`.
-2. *Copia prompt*, poi nella chat allega lo ZIP e incolla il prompt.
+   Se la chat ha già i file della tesi (es. un progetto di Claude o ChatGPT in cui li hai caricati),
+   usa invece **Solo il report (.md)**: scarichi solo le revisioni e il prompt si adatta. Se mancano
+   dei file, la chat ti chiederà quali `.tex` incollare.
+2. *Copia prompt*, poi nella chat allega lo ZIP (o il report) e incolla il prompt.
 3. Metti nella cartella i `.tex` corretti che la chat ti restituisce.
 
 Infine premi **Compila** (pdflatex/xelatex + bibtex/biber, file temporanei in `build/`): il PDF

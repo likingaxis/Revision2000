@@ -192,6 +192,8 @@ body[data-dock="bottom"]{grid-template-areas:"viewer panel" "rail rail";grid-tem
 .sbtn{display:inline-flex;align-items:center;gap:7px;margin-top:8px;background:var(--pri);color:var(--pri-ink);border-radius:999px;padding:7px 14px;font-weight:600;font-size:12.5px;text-decoration:none}
 .sbtn svg{width:15px;height:15px}
 .sbtn:hover{filter:brightness(1.15)}
+.sbtn.ghost{background:var(--card);color:var(--ink);box-shadow:var(--shadow-s)}
+.dlrow{display:flex;flex-wrap:wrap;gap:6px}
 .hbtn{display:inline-flex;align-items:center;gap:7px;background:var(--card);border-radius:999px;padding:9px 15px;font-weight:600;font-size:13px;box-shadow:var(--shadow-s);margin-left:auto}
 .hbtn svg{width:17px;height:17px}
 
@@ -1085,13 +1087,26 @@ function openSend(){
     <div class="opt">
       <div class="oh"><div class="ic">${icon("chat")}</div><div><b>Chat sul web</b><small>ChatGPT, Claude.ai, Gemini… le dai i file come allegato</small></div></div>
       <ol class="steps">
-        <li style="--k:1"><b>Scarica lo ZIP</b><span>${pdfOnly ? "PDF + revisioni." : "Solo i file della tesi + le revisioni."}</span><a class="sbtn" data-zip href="${withP("/api/export.zip")}" download>${icon("down")}Scarica ZIP</a></li>
-        <li style="--k:2"><b>Copia il prompt</b><button class="sbtn" data-copy="chat">${icon("copy")}Copia prompt</button></li>
-        <li style="--k:3"><b>Nella chat: allega lo ZIP e incolla</b><span>Il prompt è anche dentro lo ZIP, in PROMPT.txt.</span></li>
+        <li style="--k:1"><b>Scarica i file</b><span id="dlHint">${pdfOnly ? "ZIP: PDF + revisioni." : "ZIP: i file della tesi + le revisioni."} Oppure solo il report, se la chat ha già i file.</span>
+          <div class="dlrow"><a class="sbtn" data-zip href="${withP("/api/export.zip")}" download>${icon("down")}Scarica ZIP</a>
+          <a class="sbtn ghost" data-md href="${withP("/api/export.md")}" download>${icon("file")}Solo il report (.md)</a></div></li>
+        <li style="--k:2"><b>Copia il prompt</b><button class="sbtn" data-copy="chat" id="chatCopy">${icon("copy")}Copia prompt</button></li>
+        <li style="--k:3"><b id="attachT">Nella chat: allega lo ZIP e incolla</b><span id="attachS">Il prompt è anche dentro lo ZIP, in PROMPT.txt.</span></li>
         <li style="--k:4"><b>${pdfOnly ? "Applica le correzioni" : "Sostituisci i file"}</b><span>${pdfOnly ? "L'AI ti restituisce il testo corretto per ogni revisione." : "Metti nella cartella i .tex che ti restituisce, poi premi Compila."}</span></li>
       </ol>
     </div>`;
   toggleModal("send", true);
+}
+// ZIP completo o solo il report: il prompt e le istruzioni dei passi si adattano alla scelta
+function setChatKind(kind){
+  const report = kind==="report", c = $("#chatCopy");
+  if(c.dataset.copy !== (report ? "report" : "chat")){
+    c.dataset.copy = report ? "report" : "chat";
+    c.closest("li").classList.remove("ok"); c.lastChild.textContent = "Copia prompt";
+  }
+  $("#attachT").textContent = report ? "Nella chat: allega il report e incolla" : "Nella chat: allega lo ZIP e incolla";
+  $("#attachS").textContent = report ? "Se la chat non ha già i file della tesi, ti chiederà quali .tex incollare."
+                                     : "Il prompt è anche dentro lo ZIP, in PROMPT.txt.";
 }
 $("#sendOpts").addEventListener("click", async e=>{
   const c = e.target.closest("[data-copy]"), z = e.target.closest("[data-zip]");
@@ -1099,7 +1114,8 @@ $("#sendOpts").addEventListener("click", async e=>{
     const {prompt:p} = await api("/api/prompt?mode="+c.dataset.copy); await navigator.clipboard.writeText(p);
     c.closest("li").classList.add("ok"); c.lastChild.textContent = "Copiato"; toast("Prompt copiato negli appunti");
   }
-  if(z){ z.closest("li").classList.add("ok"); toast("Download dello ZIP avviato"); }
+  if(z){ z.closest("li").classList.add("ok"); setChatKind("zip"); toast("Download dello ZIP avviato"); }
+  if(e.target.closest("[data-md]")){ e.target.closest("li").classList.add("ok"); setChatKind("report"); toast("Download del report avviato"); }
 });
 $("#bPrompt").onclick = openSend;
 $("#bCompile").onclick = async ()=>{
