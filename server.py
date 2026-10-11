@@ -22,7 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
@@ -107,6 +107,10 @@ def align(sel, toks, hint_line=None):
         if matched > best[0] or (matched == best[0] and dist < best[3]):
             best = (matched, first, last, dist)
     return best[:3]
+
+
+def read_lines_joined(path: Path):
+    return "\n".join(read_lines(path))
 
 
 def read_lines(path: Path):
@@ -294,6 +298,64 @@ class Project:
         errs = [l for l in out.splitlines() if re.search(r"\.tex:\d+:|^! ", l)]
         ok = (self.root / f"{stem}.pdf").exists() and not errs
         return {"ok": ok, "errors": errs[:30], "tail": out[-3000:]}
+
+    # ------------------------------------------------------------ consegna all'AI
+    def prompt(self, mode="agent"):
+        """agent: agente con accesso ai file (Claude Code, Cursor...); chat: chat web a cui si carica lo ZIP."""
+        if mode == "chat":
+            if self.kind == "latex":
+                return ("Ti allego uno ZIP con il mio progetto LaTeX (file principale: " + self.main + ") e la cartella _review/. "
+                        "In _review/REVIEW.md trovi le revisioni da applicare, con le istruzioni: seguile esattamente, "
+                        "facendo solo le modifiche richieste e senza toccare il resto. "
+                        "Alla fine restituiscimi, come file scaricabili, SOLO i file .tex che hai modificato, completi e pronti da sostituire "
+                        "(se possibile in un unico ZIP con la stessa struttura di cartelle), piu' _review/review.json aggiornato "
+                        "con status (\"done\" o \"skipped\") e ai_note per ogni revisione. "
+                        "Poi elencami in breve le revisioni saltate o dubbie.")
+            return ("Ti allego uno ZIP con il PDF \"" + self.name + "\" e _review/REVIEW.md, che contiene le revisioni annotate sul PDF "
+                    "(pagina + testo). Per ogni revisione restituiscimi il testo corretto, nell'ordine e con l'id (R001, R002...), "
+                    "seguendo le istruzioni di REVIEW.md; se allego anche il file sorgente (Word, LaTeX, Markdown...) applicale direttamente "
+                    "e restituiscimi il file modificato.")
+        if self.kind == "latex":
+            return (f"Leggi `{self.md_path}` e applica ai file .tex di `{self.root}` tutte le revisioni aperte, "
+                    f"seguendo esattamente le istruzioni del file. Aggiorna status e ai_note in `{self.json_path}` per ogni item.")
+        return (f"Leggi `{self.md_path}`: contiene revisioni annotate sul PDF \"{self.name}\". Applicale al documento sorgente "
+                f"[INDICA QUI IL FILE SORGENTE], seguendo le istruzioni del file. Aggiorna status e ai_note in `{self.json_path}` per ogni item.")
+
+    SRC_EXT = {".tex", ".bib", ".cls", ".sty", ".bst", ".bbx", ".cbx", ".def", ".cfg", ".clo",
+               ".png", ".jpg", ".jpeg", ".pdf", ".eps", ".svg", ".tikz", ".csv", ".dat", ".txt"}
+    SKIP_DIRS = {"build", "_review", "_cestino", ".git", "node_modules", "__pycache__", ".claude"}
+
+    def export_zip(self):
+        """ZIP da caricare in una chat web: sorgenti del progetto + _review/ + PROMPT.txt."""
+        import io, zipfile
+        buf = io.BytesIO()
+        stem = Path(self.main).stem if self.main else ""
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+            if self.kind == "latex":
+                # solo i .tex del documento + i file che citano (immagini, .bib, classi locali):
+                # un paper.tex o altri materiali nella stessa cartella non finiscono nello ZIP
+                texs = self.tex_files()
+                text = "\n".join(read_lines_joined(t) for t in texs)
+                for t in texs:
+                    z.write(t, t.relative_to(self.root).as_posix())
+                for f in sorted(self.root.rglob("*")):
+                    rel = f.relative_to(self.root)
+                    if (not f.is_file() or f.suffix.lower() == ".tex" or self.SKIP_DIRS & set(rel.parts)
+                            or f.suffix.lower() not in self.SRC_EXT or f.stat().st_size > 15_000_000
+                            or rel.as_posix() == f"{stem}.pdf"):
+                        continue
+                    noext = rel.with_suffix("").as_posix()
+                    used = (noext in text or rel.as_posix() in text
+                            or (f.parent == self.root and f.suffix.lower() in {".cls", ".sty", ".bst"}))
+                    if used:
+                        z.write(f, rel.as_posix())
+            else:
+                z.write(self.pdf, f"{self.name}.pdf")
+            z.write(self.md_path, "_review/REVIEW.md")
+            z.write(self.json_path, "_review/review.json")
+            z.writestr("PROMPT.txt", self.prompt("chat"))
+        safe = re.sub(r"[^\w.-]+", "_", self.name).strip("_") or "progetto"
+        return buf.getvalue(), f"{safe}_per_AI.zip"
 
     # ------------------------------------------------------------ markdown export
     def write_md(self, data):
@@ -566,13 +628,15 @@ def make_handler():
                 d["info"] = proj.info()
                 return self.send(200, d)
             if u.path == "/api/prompt":
-                if proj.kind == "latex":
-                    p = (f"Leggi `{proj.md_path}` e applica ai file .tex di `{proj.root}` tutte le revisioni aperte, "
-                         f"seguendo esattamente le istruzioni del file. Aggiorna status e ai_note in `{proj.json_path}` per ogni item.")
-                else:
-                    p = (f"Leggi `{proj.md_path}`: contiene revisioni annotate sul PDF \"{proj.name}\". Applicale al documento sorgente "
-                         f"[INDICA QUI IL FILE SORGENTE], seguendo le istruzioni del file. Aggiorna status e ai_note in `{proj.json_path}` per ogni item.")
-                return self.send(200, {"prompt": p})
+                return self.send(200, {"prompt": proj.prompt((q.get("mode") or ["agent"])[0])})
+            if u.path == "/api/export.zip":
+                data, fname = proj.export_zip()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/zip")
+                self.send_header("Content-Disposition", f'attachment; filename="{fname}"')
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                return self.wfile.write(data)
             self.send(404, {"error": "not found"})
 
         def do_POST(self):

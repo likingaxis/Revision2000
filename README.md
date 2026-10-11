@@ -153,21 +153,31 @@ cambiare testo o azione.
 Il simbolo ⚠ indica una revisione non collegata al testo sorgente (formule, tabelle, testo generato
 da macro). L'AI userà la riga indicata da SyncTeX.
 
-Nella barra laterale: progetti, nota generale, zoom, ricarica PDF, compila, pagina corrente,
-scorciatoie (**?**) e lo slider del tema (chiaro / seppia / scuro, vale anche per il PDF).
-Quando riapri un progetto riparti dalla pagina in cui eri rimasto.
+Nella barra: progetti, nota generale, zoom, ricarica PDF, compila, pagina corrente, **Guida**
+(ⓘ, si apre anche da sola al primo avvio), scorciatoie (**?**) e lo slider del tema (chiaro / seppia / scuro, vale anche per il PDF).
+Quando riapri un progetto riparti dalla pagina in cui eri rimasto. La barra si può spostare:
+trascinala dalla maniglia ⠿ e rilasciala a sinistra, a destra, in alto o in basso.
 
 ---
 
 ## 5. Far applicare le revisioni all'AI
 
-1. Premi **Copia prompt AI**.
-2. Incollalo in Claude Code (o in un altro agente con accesso ai file) aperto nella cartella del progetto.
-   Per un PDF importato, sostituisci `[INDICA QUI IL FILE SORGENTE]` con il documento da modificare.
-3. L'AI applica le modifiche e, in `review.json`, segna ogni revisione come `done` o `skipped`
-   con una nota (`ai_note`). Tornando sulla pagina vedi le note.
-4. **▶ Compila** rigenera il PDF (pdflatex/xelatex + bibtex/biber, file temporanei in `build/`).
-   Il PDF si ricarica da solo.
+Premi **Invia all'AI** e scegli una delle due strade. La finestra ti guida passo per passo.
+
+**Agente sul PC** (Claude Code, Cursor, Copilot…), che modifica i file da solo:
+1. *Copia prompt*.
+2. Incollalo nell'agente aperto nella cartella del progetto. Per un PDF importato, sostituisci
+   `[INDICA QUI IL FILE SORGENTE]` con il documento da correggere.
+3. L'agente segna ogni revisione come `done` o `skipped` con una nota: tornando sulla pagina le vedi.
+
+**Chat sul web** (ChatGPT, Claude.ai, Gemini…):
+1. *Scarica ZIP*: contiene solo i file del documento (i `.tex` inclusi e le immagini/bibliografie
+   che usano), le revisioni in `_review/` e il prompt in `PROMPT.txt`.
+2. *Copia prompt*, poi nella chat allega lo ZIP e incolla il prompt.
+3. Metti nella cartella i `.tex` corretti che la chat ti restituisce.
+
+Infine premi **Compila** (pdflatex/xelatex + bibtex/biber, file temporanei in `build/`): il PDF
+si ricarica da solo.
 
 ---
 
