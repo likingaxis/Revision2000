@@ -491,7 +491,7 @@ body.resizing #viewer{pointer-events:none}
 .rail{cursor:grab;touch-action:none}
 .rail .pageind{cursor:default}
 .rail.lifting{opacity:.18;transition:opacity .2s}
-.railghost{position:fixed;z-index:67;pointer-events:none;margin:0!important;box-shadow:0 34px 90px -12px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.07)!important;will-change:transform,left,top}
+.railghost{position:fixed;z-index:67;pointer-events:none;margin:0!important;box-shadow:0 34px 90px -12px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.07)!important;will-change:translate,transform}
 #dockov .dz.on{box-shadow:0 0 0 6px color-mix(in srgb,var(--ink) 8%,transparent)}
 .tgroup{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px}
 .rail.horiz .tgroup{flex-direction:row}
@@ -534,10 +534,10 @@ body.resizing #viewer{pointer-events:none}
 /* schede trascinabili: Fatta / Dopo / Elimina */
 .item{touch-action:pan-y}
 .item.dragging{opacity:.25;transform:scale(.97)}
-.cardghost{position:fixed;z-index:96;pointer-events:none;margin:0!important;box-shadow:var(--shadow-l)!important;will-change:left,top,transform}
+.cardghost{position:fixed;z-index:96;pointer-events:none;margin:0!important;box-shadow:var(--shadow-l)!important;will-change:translate,transform}
 .cardghost .acts{display:none}
 #dropbar{position:absolute;left:14px;right:14px;bottom:14px;display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:8px;z-index:20;transform:translateY(140%);opacity:0;
-  transition:transform .45s cubic-bezier(.3,1.25,.45,1),opacity .2s;pointer-events:none}
+  transition:transform .35s cubic-bezier(.3,1.25,.45,1),opacity .18s;pointer-events:none}
 #panel.dragmode #dropbar{transform:none;opacity:1;pointer-events:auto}
 #panel.dragmode #list{padding-bottom:110px}
 #dropbar .dzc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;height:76px;border-radius:20px;background:var(--card);box-shadow:var(--shadow);font-size:12px;font-weight:600;color:var(--ink-2);
@@ -630,6 +630,132 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
 .tiles svg{width:18px;height:18px;color:var(--ink);display:block;margin-bottom:6px}
 .tiles b{display:block;color:var(--ink);font-size:13px;font-weight:600}
 
+/* ================================================================ 2.0 */
+/* segni da correttore sul PDF */
+.hl.mk{mix-blend-mode:normal;opacity:1;background:transparent!important;border-radius:2px}
+.hl.mk::after{content:"";position:absolute;pointer-events:none}
+.hl.k-delete,.hl.k-replace{background:color-mix(in srgb,var(--c) 9%,transparent)!important}
+.hl.k-delete::after,.hl.k-replace::after{left:-1px;right:-1px;top:54%;height:2px;margin-top:-1px;background:var(--c);border-radius:2px;transform-origin:left;animation:strike .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes strike{from{transform:scaleX(0)}}
+.hl.k-insert{background:color-mix(in srgb,var(--c) 8%,transparent)!important}
+.hl.k-insert.last::after{right:-6px;bottom:-8px;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:9px solid var(--c);animation:fade .4s both}
+.hl.k-rewrite{background:color-mix(in srgb,var(--c) 7%,transparent)!important}
+.hl.k-rewrite::after{left:0;right:0;bottom:-4px;height:5px;
+  background:linear-gradient(135deg,transparent 35%,var(--c) 35%,var(--c) 58%,transparent 58%) 0 0/6px 5px repeat-x,linear-gradient(45deg,transparent 35%,var(--c) 35%,var(--c) 58%,transparent 58%) 3px 0/6px 5px repeat-x}
+.hl.k-comment,.hl.k-general{background:color-mix(in srgb,var(--c) 30%,transparent)!important}
+.hl.k-cite,.hl.k-check{background:color-mix(in srgb,var(--c) 8%,transparent)!important}
+.hl.k-cite::after,.hl.k-check::after{left:0;right:0;bottom:-3px;border-bottom:2px dotted var(--c)}
+.hl.k-like{background:color-mix(in srgb,var(--c) 10%,transparent)!important}
+.hl.k-like::after{left:0;right:0;bottom:-3px;height:2px;background:var(--c);border-radius:2px}
+.hl.k-move{background:transparent!important;outline:1.5px dashed var(--c);outline-offset:1px}
+.hl.mk:hover{background:color-mix(in srgb,var(--c) 20%,transparent)!important}
+.hl.mk.done{opacity:.28}
+
+/* modifiche dell'AI da controllare */
+.aichg{display:none;align-items:center;gap:10px;width:100%;margin-top:10px;padding:9px 14px;border-radius:14px;background:color-mix(in srgb,var(--insert) 13%,var(--card));color:var(--ink);font-size:12.5px;text-align:left;box-shadow:var(--shadow-s)}
+.aichg.show{display:flex;animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.aichg .dot{width:8px;height:8px;border-radius:50%;background:var(--insert);box-shadow:0 0 0 0 var(--insert);animation:pulse 1.6s infinite;flex:none}
+.aichg span{flex:1}
+.aichg b{font-weight:600;text-decoration:underline;text-underline-offset:3px}
+#review .sheet{width:min(840px,94vw);padding:26px 28px}
+.rvtop{display:flex;align-items:center;gap:12px;margin:-4px 0 18px}
+.rvtop .lead{margin:0;flex:1}
+.rvtop .sbtn{margin:0}
+.rvf{margin-bottom:18px}
+.rvfh{display:flex;align-items:center;gap:8px;margin:0 2px 8px;font-size:13px}
+.rvfh .mono{color:var(--mut);margin-left:auto}
+.hunk{background:var(--sunken);border-radius:16px;padding:12px 14px;margin-bottom:8px;transition:opacity .22s,transform .25s cubic-bezier(.2,.8,.2,1);animation:rise .38s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--k,0)*30ms)}
+.hunk.gone{opacity:0;transform:translateX(24px)}
+.hunk.flash{box-shadow:0 0 0 2px var(--insert)}
+.hunk .hh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--mut)}
+.hunk .hh .sp{flex:1}
+.hunk .hh .sbtn{margin:0;padding:6px 12px}
+.hunk .rid{font-size:11px;font-weight:600;border-radius:999px;padding:1px 8px;background:var(--card);color:var(--ink-2);display:inline-flex;align-items:center;gap:5px}
+.hunk .rid::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c)}
+.wd{margin:10px 0 0;font:12.5px/1.6 "JetBrains Mono",Consolas,monospace;white-space:pre-wrap;word-break:break-word;color:var(--ink-2);max-height:260px;overflow:auto}
+.wd del{background:color-mix(in srgb,var(--delete) 16%,transparent);color:var(--delete);border-radius:3px}
+.wd ins{background:color-mix(in srgb,var(--insert) 20%,transparent);color:var(--ink);text-decoration:none;border-radius:3px}
+.wd .ell{color:var(--mut)}
+
+/* cosa e' cambiato nel PDF */
+.chg{position:absolute;z-index:1;pointer-events:none;border-radius:3px;background:color-mix(in srgb,var(--insert) 26%,transparent);box-shadow:0 0 0 1.5px color-mix(in srgb,var(--insert) 55%,transparent);
+  animation:chgin .6s cubic-bezier(.2,.8,.2,1) both;transition:box-shadow .25s}
+.chg.del{width:3px!important;margin-left:-2px;background:var(--delete);box-shadow:none}
+.chg.cur{box-shadow:0 0 0 3px var(--insert)}
+@keyframes chgin{0%{opacity:0;transform:scale(1.12)}60%{opacity:1}}
+
+/* pillole in basso nel viewer: rivedi una per una, modifiche nel PDF */
+.vpill{position:fixed;z-index:46;display:flex;align-items:center;gap:4px;background:var(--pri);color:var(--pri-ink);padding:5px 5px 5px 16px;border-radius:999px;box-shadow:var(--shadow-l);font-size:13px;font-weight:500;
+  opacity:0;transform:translate(-50%,14px) scale(.97);pointer-events:none;transition:opacity .2s,transform .32s cubic-bezier(.2,.9,.25,1.2),top .3s cubic-bezier(.2,.8,.2,1)}
+.vpill.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.vpill button{color:inherit;padding:6px 10px;border-radius:999px;font-weight:600;font-size:12.5px;display:inline-flex;align-items:center;gap:5px;transition:background-color .15s}
+.vpill button:hover{background:color-mix(in srgb,var(--pri-ink) 15%,transparent)}
+.vpill svg{width:15px;height:15px}
+.vpill .vs{width:1px;height:18px;background:color-mix(in srgb,var(--pri-ink) 25%,transparent);margin:0 3px}
+.vpill .vt{font-variant-numeric:tabular-nums;white-space:nowrap}
+.vpill .vdot{width:8px;height:8px;border-radius:50%;background:var(--c,var(--insert));flex:none;margin-right:4px}
+.item.cur{box-shadow:0 0 0 2px var(--c),var(--shadow)}
+
+/* mappa delle revisioni accanto alla barra di scorrimento */
+#map{position:fixed;z-index:30;width:12px;border-radius:8px;cursor:pointer;display:none;touch-action:none;transition:width .18s,background-color .18s}
+#map.show{display:block}
+#map:hover,#map.drag{width:18px;background:color-mix(in srgb,var(--ink) 6%,transparent)}
+#map .mthumb{position:absolute;left:0;right:0;border-radius:6px;background:color-mix(in srgb,var(--ink) 11%,transparent);transition:background-color .18s}
+#map:hover .mthumb{background:color-mix(in srgb,var(--ink) 17%,transparent)}
+#map .mmarks i{position:absolute;left:2px;right:2px;height:3px;margin-top:-1.5px;border-radius:2px;background:var(--c);transition:transform .18s}
+#map .mmarks i.d{opacity:.35}
+#map .mmarks i.ch{--c:var(--insert);left:auto;right:0;width:3px;height:6px;margin-top:-3px}
+#map:hover .mmarks i{transform:scaleY(1.7)}
+#maptip{position:fixed;z-index:31;pointer-events:none;background:var(--card);border-radius:12px;box-shadow:var(--shadow-l);padding:6px 6px 5px;font-size:11.5px;font-weight:600;color:var(--ink-2);
+  opacity:0;transform:translateX(6px);transition:opacity .12s,transform .18s cubic-bezier(.2,.8,.2,1)}
+#maptip.show{opacity:1;transform:none}
+#maptip canvas{display:block;width:110px;border-radius:4px;margin-bottom:5px;filter:var(--pdf-filter);box-shadow:var(--shadow-s)}
+
+/* filtri, ordinamento, gruppi per capitolo */
+.frow .pill-select{margin-left:0}
+.frow .sp{flex:1}
+.fbtn{display:inline-flex;align-items:center;gap:6px;background-image:none;padding:6px 12px}
+.fbtn svg{width:14px;height:14px}
+.fcnt{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--pri);color:var(--pri-ink);font-size:10.5px}
+.fcnt:empty{display:none}
+#fpop{position:absolute;right:16px;z-index:25;width:300px;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-l);padding:14px;display:none;opacity:0;
+  transform:translateY(-6px) scale(.97);transform-origin:top right;transition:opacity .15s,transform .2s cubic-bezier(.2,.9,.25,1.15)}
+#fpop.show{opacity:1;transform:none}
+.fsec{margin-bottom:12px}
+.fsec:last-child{margin:0}
+.fl{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);margin:0 2px 6px}
+.fchips{display:flex;flex-wrap:wrap;gap:5px}
+.fchips button{background:var(--sunken);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-2);font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:background-color .15s,color .15s}
+.fchips button i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+.fchips button.on{background:var(--pri);color:var(--pri-ink)}
+.grp{display:flex;align-items:center;gap:8px;margin:14px 4px 8px;font-size:12px;color:var(--mut);cursor:pointer;user-select:none}
+.grp:first-child{margin-top:2px}
+.grp b{color:var(--ink-2);font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%}
+.grp .gn{background:var(--sunken);border-radius:999px;padding:0 7px;font-size:11px;font-weight:600}
+.grp .gchev svg{width:14px;height:14px;display:block;transition:transform .28s cubic-bezier(.3,1.3,.5,1)}
+.grp.closed .gchev svg{transform:rotate(-90deg)}
+.grp::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* tour guidato */
+#tour{position:fixed;inset:0;z-index:90;display:none}
+#tour.show{display:block}
+#tour .spot{position:fixed;border-radius:22px;box-shadow:0 0 0 9999px rgba(12,12,16,.55);pointer-events:none;
+  transition:left .5s cubic-bezier(.2,.9,.25,1.08),top .5s cubic-bezier(.2,.9,.25,1.08),width .5s cubic-bezier(.2,.9,.25,1.08),height .5s cubic-bezier(.2,.9,.25,1.08)}
+#tour .spot::after{content:"";position:absolute;inset:-4px;border-radius:26px;border:2px solid rgba(255,255,255,.85);animation:tring 1.8s ease-out infinite}
+@keyframes tring{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.05)}}
+#tour .tbub{position:fixed;width:320px;background:var(--card);color:var(--ink);border-radius:20px;box-shadow:var(--shadow-l);padding:18px 18px 14px;
+  transition:left .5s cubic-bezier(.2,.9,.25,1.08),top .5s cubic-bezier(.2,.9,.25,1.08)}
+#tour .tbody{animation:swapin .3s cubic-bezier(.2,.8,.2,1)}
+#tour .tstep{font-size:10.5px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
+#tour .tbub b{display:block;font-size:16px;margin:4px 0;letter-spacing:-.2px}
+#tour .tbub p{margin:0 0 14px;color:var(--ink-2);font-size:13.5px;line-height:1.5}
+#tour .trow{display:flex;align-items:center;gap:8px}
+#tour .dots{flex:1;display:flex;gap:5px;justify-content:center}
+#tour .dots i{width:6px;height:6px;border-radius:3px;background:var(--line);transition:width .3s cubic-bezier(.3,1.3,.5,1),background-color .3s}
+#tour .dots i.on{width:18px;background:var(--ink)}
+#tour .tskip{color:var(--mut);font-size:12.5px;padding:6px 4px}
+#tour .tnext{background:var(--pri);color:var(--pri-ink);border-radius:999px;padding:8px 16px;font-weight:600;font-size:13px}
+
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-width:900px){body,body[data-dock]{grid-template-areas:"rail viewer" "rail panel";grid-template-columns:auto 1fr;grid-template-rows:1fr 45vh}}
 </style>
@@ -668,6 +794,7 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 18.5V7a2.5 2.5 0 0 1 2.5-2.5h9A2.5 2.5 0 0 1 19 7v6.5a2.5 2.5 0 0 1-2.5 2.5H9z"/><path d="M9 9h6M9 12h4"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 17v1a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1"/></symbol>
   <symbol id="i-area" viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M9 12h6M12 9v6"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6.5 9.5 5.5 5.5 5.5-5.5"/></symbol>
   <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M5.5 3.5 18.5 10l-5.8 1.8-2.2 6z"/></symbol>
   <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z"/></symbol>
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M15.5 5.6a3 3 0 0 1 0 5.8M17.5 14.3c1.7.6 2.7 2.2 3 4.7"/></symbol>
@@ -719,18 +846,32 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
       <button class="btn-pri" id="bPrompt"><svg class="i"><use href="#i-send"/></svg>Invia all'AI<span class="cnt" id="sendN"></span></button>
       <button class="btn-sec" id="bShare" title="Revisione con altre persone: dai il PDF, importa le loro note"><svg class="i"><use href="#i-users"/></svg></button>
     </div>
+    <button class="aichg" id="aichg"><span class="dot"></span><span id="aichgT"></span><b>Controlla</b></button>
   </div>
   <div class="tools">
     <label class="search"><svg class="i"><use href="#i-search"/></svg><input type="search" id="q" placeholder="Cerca nelle revisioni"></label>
     <div class="frow">
       <div class="seg" id="fSeg"><span class="knob"></span><button data-v="open" class="on">Aperte</button><button data-v="later" title="Revisioni posticipate">Dopo</button><button data-v="all">Tutte</button></div>
-      <select class="pill-select" id="fAct"><option value="">Ogni azione</option></select>
+      <span class="sp"></span>
+      <button class="pill-select fbtn" id="bRev" title="Rivedi le revisioni una per una (J avanti, K indietro)"><svg class="i"><use href="#i-play"/></svg>Rivedi</button>
+      <button class="pill-select fbtn" id="fBtn" title="Filtra, ordina, raggruppa">Filtri<span class="fcnt" id="fCnt"></span></button>
     </div>
   </div>
   <div class="selbar" id="selbar" style="margin:0 20px 8px"></div>
   <div id="list"></div>
   <div id="dropbar"></div>
+  <div id="fpop"></div>
 </aside>
+<div class="vpill" id="revnav"><span class="vdot"></span><span class="vt" id="rvT"></span><span class="vs"></span>
+  <button data-rv="prev" title="Precedente (K)"><svg class="i"><use href="#i-up"/></svg></button><button data-rv="next" title="Successiva (J)" style="transform:rotate(180deg)"><svg class="i"><use href="#i-up"/></svg></button>
+  <span class="vs"></span><button data-rv="done"><svg class="i"><use href="#i-check"/></svg>Fatta</button><button data-rv="later"><svg class="i"><use href="#i-clock"/></svg>Dopo</button>
+  <button data-rv="close" title="Chiudi (Esc)"><svg class="i"><use href="#i-x"/></svg></button></div>
+<div class="vpill" id="chgbar"><span class="vdot"></span><span class="vt" id="cgT"></span><span class="vs"></span>
+  <button data-cg="prev" title="Precedente"><svg class="i"><use href="#i-up"/></svg></button><span class="vt" id="cgPos"></span><button data-cg="next" title="Successiva" style="transform:rotate(180deg)"><svg class="i"><use href="#i-up"/></svg></button>
+  <span class="vs"></span><button data-cg="hide">Nascondi</button></div>
+<div id="map"><div class="mthumb"></div><div class="mmarks"></div></div>
+<div id="maptip"></div>
+<div id="tour"><div class="spot"></div><div class="tbub"></div></div>
 <div id="coach"><span class="demo"><i></i><svg class="i"><use href="#i-cursor"/></svg></span>Seleziona una frase nel PDF per segnalare un problema</div>
 
 <div id="pop">
@@ -744,6 +885,7 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
     <select class="pill-select" id="popPrio" title="Priorità"><option value="normale">Normale</option><option value="alta">Alta priorità</option><option value="bassa">Bassa priorità</option></select>
     <label class="switch" id="propSw" title="L'AI non modifica: ti propone 3 alternative tra cui scegliere"><input type="checkbox" id="popProp"><i></i>Proponi</label>
     <label class="switch" id="allSw" title="Applica la stessa correzione a tutte le occorrenze"><input type="checkbox" id="popAll"><i></i>Ovunque</label>
+    <label class="switch" id="penSw" title="Pennarello: tieni questa azione per le prossime selezioni, senza riquadro (Esc per smettere)"><input type="checkbox" id="popPen"><i></i>Fissa</label>
     <span class="sp"></span>
     <button id="popSave">Salva <kbd>↵</kbd></button>
   </div>
@@ -798,6 +940,7 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
   <div class="kr">Chiudi / annulla<span><kbd>Esc</kbd></span></div>
   <div class="kr">Nota generale sulla pagina<span><kbd>G</kbd></span></div>
   <div class="kr">Annulla l'ultima revisione<span><kbd>Ctrl</kbd> <kbd>Z</kbd></span></div>
+  <div class="kr">Rivedi una per una<span><kbd>J</kbd> avanti · <kbd>K</kbd> indietro</span></div>
   <div class="kr">Fatta / Dopo / Elimina<span>trascina la scheda</span></div>
   <div class="kr">Allarga il pannello<span>trascina il suo bordo</span></div>
   <div class="kr">Zoom<span><kbd>Ctrl</kbd> <kbd>+</kbd> / <kbd>−</kbd></span></div>
@@ -830,6 +973,14 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
     <div style="--k:4"><svg class="i"><use href="#i-grip"/></svg><b>Trascina</b>Le schede su Fatta, Dopo, Elimina. La barra dove vuoi</div>
     <div style="--k:5"><svg class="i"><use href="#i-users"/></svg><b>Revisori</b>Fai rivedere la tesi ad altre persone</div>
   </div>
+  <div style="display:flex;justify-content:center;margin-top:14px"><button class="linkb" id="tourBtn" style="margin:0">Fai il tour guidato sull'app</button></div>
+</div></div>
+
+<div id="review" class="modal"><div class="sheet">
+  <button class="ib close" data-close><svg class="i"><use href="#i-x"/></svg></button>
+  <h3>Cosa ha cambiato l'AI</h3>
+  <div class="rvtop"><p class="lead" id="rvLead"></p><button class="sbtn" id="rvKeepAll"><svg class="i"><use href="#i-check"/></svg>Tieni tutte</button></div>
+  <div id="rvList"></div>
 </div></div>
 
 <div id="send" class="modal"><div class="sheet">
@@ -904,6 +1055,10 @@ const color = a => getComputedStyle(document.documentElement).getPropertyValue("
 const icon = (id, cls="i") => `<svg class="${cls}"><use href="#i-${id}"/></svg>`;
 let pdf, scale = 1.5, pages = [], items = [], pending = null, curAct = "replace", picking = null, undoStack = [], showAll = false, view = "open";
 const seen = new Set();
+let CHG = {hunks:[]}, CHAPTERS = {}, lastVis = [], rv = null, pen = null, docWords = null, CHGR = [], chgGroups = [], chgIdx = -1, chgShown = false;
+const PEN_OK = ["delete","rewrite","cite","check","like"];
+let filt = {act:"", who:"", sort:"page", group:true}; try{ Object.assign(filt, JSON.parse(localStorage.getItem("r2k-filt")||"{}")); }catch(e){}
+const collapsed = new Set();
 
 function toast(msg, ms=2600, action){
   const t=$("#toast"); t.innerHTML=""; const sp=document.createElement("span"); sp.textContent=msg; t.appendChild(sp);
@@ -920,7 +1075,7 @@ async function api(path, method="GET", body){
 }
 
 // ---------------------------------------------------------------- PDF
-async function loadPdf(){
+async function loadPdf(opts={}){
   const keep = $("#viewer").scrollTop / Math.max(1,$("#viewer").scrollHeight);
   pdf = await pdfjsLib.getDocument({url:withP("/pdf?t="+Date.now())}).promise;
   const box = $("#pages"); box.innerHTML = ""; pages = [];
@@ -939,6 +1094,113 @@ async function loadPdf(){
   if(!loadPdf._done){ loadPdf._done = true; try{ pos = +localStorage.getItem("r2k-pos-"+PID) || 0; }catch(e){} }  // riapre dove eri rimasto
   $("#viewer").scrollTop = pos * $("#viewer").scrollHeight;
   drawHighlights(); updatePageInd(); updateCoach();
+  const doc = pdf;
+  if(opts.diff || !docWords) extractWords(doc).then(W=>{ if(doc!==pdf) return; const was = docWords; docWords = W; if(opts.diff && was) showChanges(was, W); }).catch(()=>{});
+  else if(chgShown) drawChg();
+}
+// parole del PDF con la loro posizione (per vedere cosa e' cambiato dopo una compilazione)
+async function extractWords(doc){
+  const W = [];
+  for(let i=1;i<=doc.numPages;i++){
+    const pg = await doc.getPage(i), vp = pg.getViewport({scale:1}), tc = await pg.getTextContent();
+    for(const it of tc.items){
+      if(!it.str || !it.str.trim()) continue;
+      const t = it.transform, h = it.height || Math.hypot(t[2], t[3]);
+      const [x1,y1,x2,y2] = vp.convertToViewportRectangle([t[4], t[5]-h*.2, t[4]+it.width, t[5]+h*.9]);
+      const rx = Math.min(x1,x2)/vp.width, ry = Math.min(y1,y2)/vp.height, rw = Math.abs(x2-x1)/vp.width, rh = Math.abs(y2-y1)/vp.height, L = it.str.length;
+      const re = /\S+/g; let m;
+      while((m = re.exec(it.str))) W.push({w:m[0], p:i, x:rx+rw*m.index/L, y:ry, ww:rw*m[0].length/L, h:rh});
+    }
+  }
+  return W;
+}
+// differenze tra due sequenze di parole: ancore uniche di 4 parole (come il "patience diff"), poi LCS nei tratti brevi
+function wordDiff(A, B){
+  const K = 4, key = (W,i)=>W.slice(i,i+K).join("\u0001"), ca = new Map(), cb = new Map();
+  for(let i=0;i+K<=A.length;i++){ const k = key(A,i); ca.set(k, ca.has(k) ? -1 : i); }
+  for(let j=0;j+K<=B.length;j++){ const k = key(B,j); cb.set(k, cb.has(k) ? -1 : j); }
+  const pairs = []; for(const [k,j] of cb){ if(j<0) continue; const i = ca.get(k); if(i!=null && i>=0) pairs.push([i,j]); }
+  pairs.sort((a,b)=>a[1]-b[1]);
+  const tails = [], prev = new Int32Array(pairs.length);
+  pairs.forEach((pp,n)=>{ let lo=0, hi=tails.length; while(lo<hi){ const m=(lo+hi)>>1; if(pairs[tails[m]][0] < pp[0]) lo=m+1; else hi=m; } prev[n] = lo>0 ? tails[lo-1] : -1; tails[lo] = n; });
+  const chain = []; for(let n = tails.length ? tails[tails.length-1] : -1; n>=0; n = prev[n]) chain.push(pairs[n]); chain.reverse();
+  const segs = [];
+  for(const [i,j] of chain){
+    const last = segs[segs.length-1];
+    if(last && i-j === last.is-last.js && i <= last.ie && j <= last.je){ last.ie = Math.max(last.ie, i+K); last.je = Math.max(last.je, j+K); continue; }
+    if(!last || (i >= last.ie && j >= last.je)) segs.push({is:i, js:j, ie:i+K, je:j+K});
+  }
+  segs.forEach((sg,n)=>{ const nx = segs[n+1], lim = nx ? [nx.is, nx.js] : [A.length, B.length];
+    while(sg.ie < lim[0] && sg.je < lim[1] && A[sg.ie]===B[sg.je]){ sg.ie++; sg.je++; } });
+  const ins = new Set(), dels = [];
+  const gap = (a0,a1,b0,b1)=>{
+    const n = a1-a0, m = b1-b0;
+    if(!m){ if(n) dels.push(b0); return; }
+    if(!n || n*m > 250000){ for(let j=b0;j<b1;j++) ins.add(j); return; }
+    const D = Array.from({length:n+1}, ()=>new Uint16Array(m+1));
+    for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) D[i][j] = A[a0+i]===B[b0+j] ? D[i+1][j+1]+1 : Math.max(D[i+1][j], D[i][j+1]);
+    let i=0, j=0, deleted=false;
+    while(i<n && j<m){ if(A[a0+i]===B[b0+j]){ if(deleted){ dels.push(b0+j); deleted=false; } i++; j++; } else if(D[i+1][j] >= D[i][j+1]){ i++; deleted=true; } else { ins.add(b0+j); j++; } }
+    if(i<n) dels.push(b0+j); while(j<m){ ins.add(b0+j); j++; }
+  };
+  let pa = 0, pb = 0;
+  for(const sg of segs){ gap(pa, sg.is, pb, sg.js); pa = sg.ie; pb = sg.je; }
+  gap(pa, A.length, pb, B.length);
+  return {ins, dels};
+}
+function showChanges(A, B){
+  const {ins, dels} = wordDiff(A.map(w=>w.w), B.map(w=>w.w));
+  const rects = []; let cur = null;
+  [...ins].sort((a,b)=>a-b).forEach(j=>{
+    const w = B[j];
+    if(cur && cur.p===w.p && Math.abs(cur.y-w.y) < .004 && j===cur.j+1){ cur.w = w.x+w.ww-cur.x; cur.j = j; }
+    else { cur = {p:w.p, x:w.x, y:w.y, w:w.ww, h:w.h, j}; rects.push(cur); }
+  });
+  for(const j of dels){ const w = B[Math.min(j, B.length-1)]; if(w) rects.push({p:w.p, x: j<B.length ? w.x : w.x+w.ww, y:w.y, w:0, h:w.h, del:true}); }
+  if(!rects.length){ toast("PDF aggiornato · nessuna differenza nel testo"); return; }
+  if(rects.length > 600){ toast("PDF aggiornato · è cambiato quasi tutto, niente evidenziazioni", 4000); return; }
+  rects.sort((a,b)=>a.p-b.p || a.y-b.y);
+  chgGroups = [];
+  for(const r of rects){ const g = chgGroups[chgGroups.length-1];
+    if(g && g.p===r.p && r.y - g.y1 < .035){ g.y1 = Math.max(g.y1, r.y+r.h); g.rs.push(r); } else chgGroups.push({p:r.p, y:r.y, y1:r.y+r.h, rs:[r]}); }
+  chgGroups.forEach((g,n)=>g.rs.forEach(r=>r.g = n));
+  CHGR = rects; chgShown = true; chgIdx = -1; drawChg(); paintChgbar(); drawMap();
+}
+function drawChg(){
+  document.querySelectorAll(".chg").forEach(x=>x.remove());
+  if(!chgShown) return;
+  for(const r of CHGR){
+    const P = pages[r.p]; if(!P) continue;
+    const d = document.createElement("div"); d.className = "chg"+(r.del?" del":"")+(r.g===chgIdx?" cur":""); d.dataset.g = r.g;
+    d.style.cssText = `left:${(r.x-.002)*100}%;top:${r.y*100}%;width:${(r.w+.004)*100}%;height:${r.h*100}%;animation-delay:${Math.min(r.g,12)*40}ms`;
+    P.div.appendChild(d);
+  }
+}
+function paintChgbar(){
+  const n = chgGroups.length, b = $("#chgbar");
+  b.classList.toggle("show", chgShown && n>0);
+  $("#cgT").textContent = `Il PDF è cambiato in ${n} ${n===1?"punto":"punti"}`;
+  $("#cgPos").textContent = chgIdx>=0 ? `${chgIdx+1}/${n}` : "";
+  placePills();
+}
+function chgGo(d){
+  if(!chgGroups.length) return;
+  chgIdx = chgIdx<0 ? (d>0 ? 0 : chgGroups.length-1) : (chgIdx + d + chgGroups.length) % chgGroups.length;
+  const g = chgGroups[chgIdx], P = pages[g.p];
+  document.querySelectorAll(".chg").forEach(x=>x.classList.toggle("cur", +x.dataset.g===chgIdx));
+  if(P) $("#viewer").scrollTo({top: P.div.offsetTop + g.y*P.div.offsetHeight - 160, behavior:"smooth"});
+  paintChgbar();
+}
+$("#chgbar").onclick = e=>{
+  const b = e.target.closest("[data-cg]"); if(!b) return;
+  if(b.dataset.cg==="hide"){ chgShown = false; drawChg(); paintChgbar(); drawMap(); return; }
+  chgGo(b.dataset.cg==="next" ? 1 : -1);
+};
+function placePills(){
+  const v = $("#viewer").getBoundingClientRect(), x = (v.left+v.width/2)+"px";
+  const a = $("#revnav"), b = $("#chgbar"), aOn = a.classList.contains("show");
+  a.style.left = x; a.style.top = (v.bottom-118)+"px";  // sopra gli avvisi in basso
+  b.style.left = x; b.style.top = (v.bottom-(aOn ? 170 : 118))+"px";
 }
 async function renderPage(i){
   const P = pages[i]; if(P.rendered) return; P.rendered = true;
@@ -1004,6 +1266,7 @@ document.addEventListener("mouseup", e=>{
     const sel = captureSelection(); if(!sel) return;
     if(picking) return finishMove(sel);
     if(editMode) return openDirect(sel);
+    if(pen) return penSave(sel);
     openPop(sel, sel.anchor);
   }, 10);
 });
@@ -1013,7 +1276,7 @@ function openPop(sel, anchorRect){
   pending = sel;
   $("#popSel").textContent = sel.area ? `Area selezionata · pagina ${sel.pt.page}` + (sel.areaText ? ` · ${sel.areaText.slice(0,160)}` : "")
                           : sel.text ? sel.text.replace(/\s+/g," ").slice(0,220) : `Nota generale · pagina ${sel.pt.page}`;
-  $("#popAll").checked=false; $("#popText").value=""; $("#popText").dataset.auto="0"; delete $("#popProp").dataset.touched;
+  $("#popAll").checked=false; $("#popPen").checked=false; $("#popText").value=""; $("#popText").dataset.auto="0"; delete $("#popProp").dataset.touched;
   setAct(sel.area ? "layout" : sel.text ? "replace" : "comment");
   $("#popPrio").value="normale";
   const pop=$("#pop"); clearTimeout(pop._h); pop.style.display="block"; pop.classList.remove("show");
@@ -1067,7 +1330,7 @@ async function flyTo(from, it){
     {transform: at(mx,my,1), offset:.55},
     {transform: at(ex,ey,.8), opacity:1, offset:.92},
     {transform: at(ex,ey,.6), opacity:0}
-  ], {duration:760, easing:"cubic-bezier(.45,0,.2,1)"});
+  ], {duration:600, easing:"cubic-bezier(.3,0,.15,1)"});
   await a.finished.catch(()=>{}); f.remove();
   card.style.visibility = ""; card.classList.remove("new"); card.classList.add("land"); setTimeout(()=>card.classList.remove("land"), 900);
 }
@@ -1091,6 +1354,7 @@ function setAct(a){
   if(!$("#popProp").dataset.touched) $("#popProp").checked = PROPOSE_DEFAULT.includes(a);
   $("#propSw").style.display = ["like","move","delete"].includes(a) ? "none" : "";
   $("#allSw").style.display = ["like","move"].includes(a) ? "none" : "";
+  $("#penSw").style.display = PEN_OK.includes(a) && !(pending && (pending.edit || pending.area || !pending.text)) ? "" : "none";
   syncPresets();
   // Sostituisci: precompila con il testo selezionato (lo modifichi e basta)
   if(a==="replace" && pending && pending.text && (!t.value || t.dataset.auto==="1")){ t.value = cleanSel(pending.text); t.dataset.auto="1"; }
@@ -1121,6 +1385,12 @@ $("#presets").addEventListener("click", e=>{
   syncPresets(); t.focus();
 });
 document.addEventListener("keydown", e=>{
+  if($("#tour").classList.contains("show")){
+    if(e.key==="Escape") endTour();
+    else if(e.key==="Enter" || e.key==="ArrowRight"){ e.preventDefault(); tourStep(1); }
+    else if(e.key==="ArrowLeft"){ e.preventDefault(); tourStep(-1); }
+    return;
+  }
   if(edOpen()){
     if(e.key==="Escape"){ e.preventDefault(); closeEd(); }
     else if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); applyDirect(); }
@@ -1139,6 +1409,9 @@ document.addEventListener("keydown", e=>{
     return;
   }
   if(picking && e.key==="Escape"){ stopPicking(); toast("Spostamento annullato"); return; }
+  if(pen && e.key==="Escape"){ stopPen(); return; }
+  if(rv!=null && e.key==="Escape"){ revClose(); return; }
+  if($("#fpop").classList.contains("show") && e.key==="Escape"){ toggleFilters(false); return; }
   if(areaMode && e.key==="Escape"){ setAreaMode(false); return; }
   if(editMode && e.key==="Escape"){ setEditMode(false); return; }
   if(!PID || (e.target.matches && e.target.matches("input,textarea,select"))) return;
@@ -1146,6 +1419,8 @@ document.addEventListener("keydown", e=>{
   if((e.ctrlKey||e.metaKey) && (e.key==="+"||e.key==="=")){ e.preventDefault(); return $("#bZin").click(); }
   if((e.ctrlKey||e.metaKey) && e.key==="-"){ e.preventDefault(); return $("#bZout").click(); }
   if(e.key==="g"||e.key==="G"){ e.preventDefault(); generalNote(); }
+  if((e.key==="j"||e.key==="J") && !e.ctrlKey && !e.metaKey){ e.preventDefault(); revGo(1); }
+  if((e.key==="k"||e.key==="K") && !e.ctrlKey && !e.metaKey){ e.preventDefault(); revGo(-1); }
   if((e.key==="e"||e.key==="E") && !e.ctrlKey && !e.metaKey){ e.preventDefault(); setEditMode(!editMode); }
   if((e.key==="a"||e.key==="A") && !e.ctrlKey && !e.metaKey){ e.preventDefault(); setAreaMode(!areaMode); }
   if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="z"){ e.preventDefault(); undoLast(); }
@@ -1191,8 +1466,10 @@ async function savePending(){
     return;
   }
   if(action==="move"){ startPicking({sel, note, priority, scope}); return; }
+  const lock = $("#popPen").checked && PEN_OK.includes(action) && !sel.area && sel.text;
   const item = await createItem(sel, {action, note, priority, scope, mode, ...(action==="like" ? {status:"style"} : {})});
   if(item) flyTo(from, item);
+  if(lock) startPen(action, mode);
 }
 async function createItem(sel, fields){
   let loc = {};
@@ -1213,6 +1490,24 @@ function startPicking(ctx){
   picking = ctx;
   $("#pickt").textContent = "Seleziona il punto di arrivo: il testo andrà subito dopo  ·  Esc per annullare";
   $("#pick").classList.add("show");
+}
+// pennarello: ogni nuova selezione diventa subito una revisione con l'azione fissata
+function startPen(action, mode){
+  pen = {action, mode};
+  const d = $("#pick .dot"); d.style.background = color(action); d.style.boxShadow = "none";
+  $("#pickt").textContent = `Pennarello «${LABEL(action)}»: ogni frase che selezioni diventa una revisione · Esc per smettere`;
+  $("#pick").classList.add("show");
+}
+function stopPen(){
+  pen = null; const d = $("#pick .dot"); d.style.background = ""; d.style.boxShadow = "";
+  if(!picking && !areaMode && !editMode) $("#pick").classList.remove("show");
+  toast("Pennarello spento");
+}
+async function penSave(sel){
+  window.getSelection().removeAllRanges();
+  const a = sel.anchor, from = {left:a.left, top:a.top, width:a.width, height:a.height};
+  const item = await createItem(sel, {action:pen.action, note:"", priority:"normale", scope:"here", mode:pen.mode, ...(pen.action==="like" ? {status:"style"} : {})});
+  if(item) flyTo(from, item);
 }
 function stopPicking(){ picking = null; $("#pick").classList.remove("show"); }
 async function finishMove(destSel){
@@ -1259,7 +1554,8 @@ function drawHighlights(){
     if(!inView(it)) continue;
     for(const r of it.rects||[]){
       const P = pages[r.page]; if(!P) continue;
-      const h = document.createElement("div"); h.className="hl"+(it.area?" area":"")+(isActive(it)?"":" done"); h.dataset.id=it.id;
+      const last = r === it.rects[it.rects.length-1];
+      const h = document.createElement("div"); h.className="hl"+(it.area?" area":" mk k-"+it.action+(last?" last":""))+(isActive(it)?"":" done"); h.dataset.id=it.id;
       h.style.cssText=`left:${r.x*100}%;top:${r.y*100}%;width:${r.w*100}%;height:${r.h*100}%;background:${color(it.action)};--c:${color(it.action)}`;
       h.title = `${it.id} · ${LABEL(it.action)}${it.note?": "+it.note:""}`;
       h.onclick = ()=>{ const el=document.getElementById("it-"+it.id); if(el){ el.scrollIntoView({behavior:"smooth",block:"center"}); el.animate([{transform:"scale(1)"},{transform:"scale(1.025)"},{transform:"scale(1)"}],{duration:450,easing:"cubic-bezier(.2,.8,.2,1)"}); } };
@@ -1273,6 +1569,7 @@ function drawHighlights(){
       P.div.appendChild(h);
     }
   }
+  drawMap();
 }
 function esc(s){ return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 function animateNumber(el, to){
@@ -1312,11 +1609,17 @@ function renderList(){
   if(renderList._p > 0 && pend === 0 && closed > 0) celebrate();
   renderList._p = pend;
   updateCoach();
-  const q = $("#q").value.trim().toLowerCase(), fa = $("#fAct").value;
-  const vis = items.filter(i=>inView(i) && (!fa || i.action===fa) && (!q || [i.id,i.note,i.pdf_text,i.file,i.ai_note,i.author].join(" ").toLowerCase().includes(q)))
-    .sort((a,b)=>(a.page||0)-(b.page||0) || ((a.rects[0]||{}).y||0)-((b.rects[0]||{}).y||0));
+  const q = $("#q").value.trim().toLowerCase(), fa = filt.act;
+  const byPage = (a,b)=>(a.page||0)-(b.page||0) || (((a.rects||[])[0]||{}).y||0)-(((b.rects||[])[0]||{}).y||0);
+  const PR = {alta:0, normale:1, bassa:2};
+  const vis = items.filter(i=>inView(i) && (!fa || i.action===fa) && (!filt.who || (filt.who==="me" ? !i.author : i.author===filt.who))
+      && (!q || [i.id,i.note,i.pdf_text,i.file,i.ai_note,i.author].join(" ").toLowerCase().includes(q)))
+    .sort(filt.sort==="recent" ? (a,b)=>(b.created||"").localeCompare(a.created||"")
+        : filt.sort==="prio" ? (a,b)=>(PR[a.priority]??1)-(PR[b.priority]??1) || byPage(a,b) : byPage);
+  lastVis = vis;
+  const nf = (filt.act?1:0) + (filt.who?1:0); $("#fCnt").textContent = nf || "";
   let k = 0;
-  $("#list").innerHTML = vis.map(it=>{
+  const cardHTML = it=>{
     const isNew = !seen.has(it.id); seen.add(it.id);
     const short = f => (f||"").split("/").pop();
     const loc = it.file ? `${short(it.file)}:${it.line}` : "";
@@ -1333,6 +1636,7 @@ function renderList(){
       ${it.dest?`<div class="sub">${icon("arrow")}dopo «${esc(it.dest.pdf_text.slice(0,70))}» · p.${it.dest.page}</div>`:(it.action==="move"?`<div class="sub warn">${icon("alert")}manca il punto di arrivo: Modifica, poi Invio</div>`:"")}
       ${it.note && !["replace","insert","edit"].includes(it.action)?`<div class="n">${esc(it.note)}</div>`:""}
       ${it.ai_note?`<div class="ai">${esc(it.ai_note)}</div>`:""}
+      ${["done","skipped"].includes(it.status) && aiHunk(it)>=0 ? `<button class="accept" data-op="aidiff" title="Vedi e controlla la modifica fatta dall'AI">${icon("search")}Vedi cosa ha cambiato l'AI</button>` : ""}
       ${canAccept(it) ? `<button class="accept" data-op="accept" title="Applichi tu la correzione al file .tex, senza AI">${icon("type")}Applica al .tex</button>` : ""}
       ${it.status==="proposed" && (it.proposals||[]).length ? `<div class="props"><div class="pt">Proposte dell'AI · clicca quella che preferisci</div>
         ${it.proposals.map((p,i)=>`<button class="prop" data-op="pick" data-i="${i}">${esc(p.text||p)}${p.why?`<small>${esc(p.why)}</small>`:""}</button>`).join("")}
@@ -1340,13 +1644,16 @@ function renderList(){
       <div class="sub">p.${it.page||"–"}${loc?` · <span class="mono">${esc(loc)}</span>`:""}${unanchored?` <span class="warn" title="Non collegata al testo sorgente: verrà usata la riga SyncTeX">${icon("alert")}</span>`:""}${it.scope==="all"?` · ${icon("all")}ovunque`:""}</div>
       <div class="acts">${it.action==="edit" || it.applied ? `<button class="ib" data-op="unedit" title="Annulla la modifica nel file .tex">${icon("undo")}</button>` : `<button class="ib" data-op="edit" title="Modifica">${icon("edit")}</button>`}${["style","later"].includes(it.status) || it.action==="edit" ? "" : `<button class="ib" data-op="toggle" title="${isActive(it)?"Segna come fatta":"Riapri"}">${icon(isActive(it)?"check":"undo")}</button>`}${["open","proposed"].includes(it.status) ? `<button class="ib" data-op="later" title="Posticipa: non la invio ora, la riprendo dopo">${icon("clock")}</button>`
       : it.status==="later" ? `<button class="ib" data-op="resume" title="Riprendi: torna tra le aperte">${icon("undo")}</button>` : ""}<button class="ib danger" data-op="del" title="Elimina">${icon("trash")}</button></div>
-    </div>`;}).join("") || (items.length && (q||fa) ? `<div class="empty">Nessun risultato.</div>`
+    </div>`;};
+  $("#list").innerHTML = grouped(vis, cardHTML) || (items.length && (q||fa||filt.who) ? `<div class="empty">Nessun risultato.</div>`
       : items.length ? `<div class="empty">Tutto fatto.</div>`
       : `<div class="empty">Seleziona del testo nel PDF.<br><kbd>1</kbd>–<kbd>9</kbd> azione · <kbd>↵</kbd> salva · <kbd>G</kbd> nota generale<br><kbd>Ctrl</kbd> <kbd>Z</kbd> annulla l'ultima<br><button class="linkb" onclick="toggleModal('guide',true)">Prima volta? Apri la guida</button></div>`);
 }
 let suppressClick = false;
 $("#list").addEventListener("click", async e=>{
   if(suppressClick) return;
+  const gh = e.target.closest(".grp");
+  if(gh){ const g = gh.dataset.g; collapsed.has(g) ? collapsed.delete(g) : collapsed.add(g); renderList(); return; }
   const card = e.target.closest(".item"); if(!card) return;
   const it = items.find(i=>i.id===card.dataset.id); const btn = e.target.closest("[data-op]"); const op = btn && btn.dataset.op;
   if(op==="del") return removeItem(it.id, true);
@@ -1364,15 +1671,86 @@ $("#list").addEventListener("click", async e=>{
   }
   if(op==="unedit") return it.applied ? unaccept(it) : undoEdit(it);
   if(op==="accept") return acceptItem(it, card);
+  if(op==="aidiff") return openReview(aiHunk(it));
   if(op==="sel"){ Object.assign(it, await api("/api/items/"+it.id,"PATCH",{selected: !isSel(it)})); renderList(); return; }
   if(op==="later" || op==="resume") return cardOp(it, card, op);
   if(op==="toggle") return cardOp(it, card, isActive(it) ? "done" : "reopen");
   if(op==="edit") return openEdit(it);
-  // vai al punto
+  gotoItem(it);
+});
+function gotoItem(it){
   const r=(it.rects||[])[0]; const P=pages[r?r.page:it.page]; if(!P) return;
   $("#viewer").scrollTo({top: P.div.offsetTop + (r? r.y*P.div.offsetHeight : 0) - 140, behavior:"smooth"});
   document.querySelectorAll(`.hl[data-id="${it.id}"]`).forEach(h=>{h.classList.remove("flash"); void h.offsetWidth; h.classList.add("flash");});
+}
+// revisioni raggruppate per capitolo (file .tex), con intestazioni richiudibili
+function chapterName(f){
+  if(!f) return "Senza file";
+  if(CHAPTERS[f]) return CHAPTERS[f];
+  if(PINFO && f===PINFO.main) return "Frontespizio e struttura";
+  return f.split("/").pop().replace(/\.tex$/,"").replace(/^\d+_/,"").replace(/_/g," ");
+}
+function grouped(vis, cardHTML){
+  if(!(filt.group && filt.sort==="page" && PINFO && PINFO.kind==="latex")) return vis.map(cardHTML).join("");
+  const order = [], by = new Map();
+  for(const it of vis){ const g = it.file || ""; if(!by.has(g)){ by.set(g, []); order.push(g); } by.get(g).push(it); }
+  if(order.length < 2) return vis.map(cardHTML).join("");
+  return order.map(g=>{ const L = by.get(g), c = collapsed.has(g);
+    return `<div class="grp${c?" closed":""}" data-g="${esc(g)}" title="${esc(g)}"><span class="gchev">${icon("chev")}</span><b>${esc(chapterName(g))}</b><span class="gn">${L.length}</span></div>`
+      + (c ? "" : L.map(cardHTML).join("")); }).join("");
+}
+// filtri: un pannellino con ordinamento, gruppi, azione e revisore
+function paintFilters(){
+  const authors = [...new Set(items.map(i=>i.author).filter(Boolean))];
+  const chip = (k,v,lab,c)=>`<button data-k="${k}" data-v="${esc(v)}" class="${filt[k]===v?"on":""}">${c?`<i style="--c:${c}"></i>`:""}${esc(lab)}</button>`;
+  $("#fpop").innerHTML = `
+    <div class="fsec"><div class="fl">Ordina</div><div class="fchips">${chip("sort","page","Per pagina")}${chip("sort","recent","Più recenti")}${chip("sort","prio","Priorità")}</div></div>
+    ${PINFO && PINFO.kind==="latex" ? `<div class="fsec"><label class="switch"><input type="checkbox" id="fGroup" ${filt.group?"checked":""}><i></i>Raggruppa per capitolo</label></div>` : ""}
+    <div class="fsec"><div class="fl">Azione</div><div class="fchips">${chip("act","","Tutte")}${ACTS.map(a=>chip("act",a[0],a[1],color(a[0]))).join("")}${chip("act","general","Nota generale",color("general"))}</div></div>
+    ${authors.length ? `<div class="fsec"><div class="fl">Segnalata da</div><div class="fchips">${chip("who","","Tutti")}${chip("who","me","Te")}${authors.map(a=>chip("who",a,a)).join("")}</div></div>` : ""}`;
+}
+function toggleFilters(on){
+  const f = $("#fpop"); on = on ?? !f.classList.contains("show"); clearTimeout(f._h);
+  if(on){ paintFilters(); const b = $("#fBtn"), pr = $("#panel").getBoundingClientRect(), br = b.getBoundingClientRect();
+    f.style.top = (br.bottom - pr.top + 8)+"px"; f.style.display = "block"; requestAnimationFrame(()=>f.classList.add("show")); }
+  else { f.classList.remove("show"); f._h = setTimeout(()=>f.style.display = "none", 200); }
+}
+$("#fBtn").onclick = e=>{ e.stopPropagation(); toggleFilters(); };
+$("#fpop").addEventListener("click", e=>{
+  e.stopPropagation();
+  const b = e.target.closest("[data-k]");
+  if(b){ filt[b.dataset.k] = b.dataset.v; }
+  else if(e.target.id==="fGroup"){ filt.group = e.target.checked; }
+  else return;
+  try{ localStorage.setItem("r2k-filt", JSON.stringify(filt)); }catch(_){}
+  paintFilters(); renderList(); drawHighlights();
 });
+document.addEventListener("click", e=>{ if($("#fpop").classList.contains("show") && !e.target.closest("#fpop,#fBtn")) toggleFilters(false); });
+// rivedi una per una: J / K, con il PDF che segue
+function revGo(d){
+  const L = lastVis; if(!L.length) return toast("Nessuna revisione da rivedere");
+  rv = rv==null ? (d>0 ? 0 : L.length-1) : Math.max(0, Math.min(L.length-1, rv + d));
+  const it = L[rv];
+  document.querySelectorAll(".item.cur").forEach(x=>x.classList.remove("cur"));
+  const card = document.getElementById("it-"+it.id);
+  if(card){ card.classList.add("cur"); card.scrollIntoView({block:"nearest", behavior:"smooth"}); }
+  gotoItem(it);
+  $("#revnav").style.setProperty("--c", color(it.action));
+  $("#rvT").textContent = `${LABEL(it.action)} · ${rv+1} di ${L.length}`;
+  $("#revnav").classList.add("show"); placePills();
+}
+function revClose(){ rv = null; $("#revnav").classList.remove("show"); document.querySelectorAll(".item.cur").forEach(x=>x.classList.remove("cur")); placePills(); }
+$("#bRev").onclick = ()=> rv==null ? revGo(1) : revClose();
+$("#revnav").onclick = async e=>{
+  const b = e.target.closest("[data-rv]"); if(!b || rv==null) return;
+  const op = b.dataset.rv;
+  if(op==="close") return revClose();
+  if(op==="next" || op==="prev") return revGo(op==="next" ? 1 : -1);
+  const it = lastVis[rv]; if(!it) return;
+  await cardOp(it, document.getElementById("it-"+it.id), op==="done" ? (isActive(it) ? "done" : "reopen") : (it.status==="later" ? "resume" : "later"));
+  if(!lastVis.length) return revClose();
+  rv = Math.min(rv, lastVis.length-1) - 1; revGo(1);
+};
 async function cardOp(it, card, op){
   if(op==="del") return removeItem(it.id, true);
   const patch = op==="later" ? {status:"later", prev_status: it.status} : op==="resume" ? {status: it.prev_status || "open"}
@@ -1414,7 +1792,7 @@ function beginCardDrag(card, it, sx, sy){
   let target = null;
   return {
     move(ev){
-      g.style.left = (r.left + ev.clientX - sx)+"px"; g.style.top = (r.top + ev.clientY - sy)+"px";
+      g.style.translate = `${ev.clientX - sx}px ${ev.clientY - sy}px`;
       const el = document.elementFromPoint(ev.clientX, ev.clientY), z = el && el.closest("#dropbar .dzc");
       target = z ? z.dataset.z : null;
       bar.querySelectorAll(".dzc").forEach(x=>x.classList.toggle("on", x===z));
@@ -1422,13 +1800,13 @@ function beginCardDrag(card, it, sx, sy){
     async drop(){
       $("#panel").classList.remove("dragmode"); document.body.classList.remove("nosel","grabbing");
       if(!target){  // rilasciata altrove: torna al suo posto
-        const a = g.animate([{left:g.style.left, top:g.style.top}, {left:r.left+"px", top:r.top+"px"}], {duration:340, easing:"cubic-bezier(.2,.8,.2,1)"});
+        const a = g.animate([{translate:g.style.translate || "0px 0px"}, {translate:"0px 0px"}], {duration:280, easing:"cubic-bezier(.2,.8,.2,1)"});
         await a.finished.catch(()=>{}); g.remove(); card.classList.remove("dragging"); return;
       }
       const zr = bar.querySelector(`[data-z="${target}"]`).getBoundingClientRect();
-      g.animate([{left:g.style.left, top:g.style.top, opacity:1, transform:"rotate(-2deg) scale(.62)"},
-                 {left:(zr.left+zr.width/2-r.width/2)+"px", top:zr.top+"px", opacity:0, transform:"scale(.3)"}],
-                {duration:320, easing:"cubic-bezier(.4,0,.2,1)", fill:"forwards"}).finished.then(()=>g.remove());
+      g.animate([{translate:g.style.translate || "0px 0px", opacity:1, transform:"rotate(-2deg) scale(.62)"},
+                 {translate:`${zr.left+zr.width/2-sx}px ${zr.top+zr.height/2-sy}px`, opacity:0, transform:"scale(.25)"}],
+                {duration:260, easing:"cubic-bezier(.3,0,.2,1)", fill:"forwards"}).finished.then(()=>g.remove());
       card.classList.remove("dragging");
       await cardOp(it, card, target);
     }
@@ -1476,8 +1854,6 @@ $("#fSeg").onclick = e=>{
   placeKnob(); renderList(); drawHighlights();
 };
 $("#q").oninput = renderList;
-$("#fAct").innerHTML += ACTS.concat([["general","Nota generale"]]).map(a=>`<option value="${a[0]}">${a[1]}</option>`).join("");
-$("#fAct").onchange = renderList;
 
 // ---------------------------------------------------------------- tema
 function placeThemeKnobs(t){
@@ -1517,7 +1893,7 @@ try{ const z=+localStorage.getItem("r2k-zoom"); if(ZOOMS.includes(z)) scale=z; }
 setZoom(scale, false);
 $("#bZin").onclick = ()=>{ const i=ZOOMS.indexOf(scale); if(i<ZOOMS.length-1) setZoom(ZOOMS[i+1]); };
 $("#bZout").onclick = ()=>{ const i=ZOOMS.indexOf(scale); if(i>0) setZoom(ZOOMS[i-1]); };
-$("#bReload").onclick = async ()=>{ const b=$("#bReload"); b.classList.add("busy"); await loadPdf(); setTimeout(()=>b.classList.remove("busy"),400); };
+$("#bReload").onclick = async ()=>{ const b=$("#bReload"); b.classList.add("busy"); await loadPdf({diff:true}); setTimeout(()=>b.classList.remove("busy"),400); };
 $("#bGen").onclick = generalNote;
 let areaMode = false;
 function setAreaMode(on){
@@ -1745,6 +2121,50 @@ $("#sendOpts").addEventListener("click", async e=>{
 });
 $("#bPrompt").onclick = openSend;
 
+const aiHunk = it=>CHG.hunks.findIndex(h=>h.ids.includes(it.id));
+async function loadChanges(){
+  if(!PINFO || PINFO.kind!=="latex") return;
+  try{ CHG = await api("/api/changes"); if(!CHG.hunks) CHG = {hunks:[]}; }catch(e){ CHG = {hunks:[]}; }
+  const n = CHG.hunks.length, nf = new Set(CHG.hunks.map(h=>h.file)).size;
+  $("#aichg").classList.toggle("show", n>0);
+  $("#aichgT").textContent = `L'AI ha cambiato ${n} ${n===1?"punto":"punti"}${nf>1?` in ${nf} file`:""}`;
+  renderList();
+}
+const when = ts=>ts ? new Date(ts).toLocaleString("it-IT",{day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
+function ctx(t){ return t.length > 260 ? esc(t.slice(0,110)) + `<span class="ell"> … </span>` + esc(t.slice(-110)) : esc(t); }
+function openReview(focus){
+  const hs = CHG.hunks;
+  $("#rvLead").textContent = hs.length ? `Dall'invio del ${when(CHG.taken)}: ${hs.length} ${hs.length===1?"modifica":"modifiche"}. Tieni quelle giuste, annulla le altre.`
+                                       : "Nessuna modifica da controllare.";
+  $("#rvKeepAll").style.display = hs.length ? "" : "none";
+  const files = [...new Set(hs.map(h=>h.file))]; let k = 0;
+  $("#rvList").innerHTML = files.map(f=>`<div class="rvf"><div class="rvfh">${icon("tex")}<b>${esc(chapterName(f))}</b><span class="mono">${esc(f)}</span></div>` +
+    hs.map((h,i)=>({h,i})).filter(x=>x.h.file===f).map(({h,i})=>`<div class="hunk" id="hk-${i}" data-i="${i}" style="--k:${k++}">
+      <div class="hh"><span class="mono">riga ${h.line}</span>${h.ids.map(id=>{ const it = items.find(x=>x.id===id); return it ? `<span class="rid" style="--c:${color(it.action)}">${id} · ${esc(LABEL(it.action))}</span>` : ""; }).join("")}
+        <span class="sp"></span><button class="sbtn ghost" data-hop="revert">${icon("undo")}Annulla</button><button class="sbtn" data-hop="keep">${icon("check")}Tieni</button></div>
+      <div class="wd">${h.words ? h.words.map(([o,t])=>o==="=" ? ctx(t) : o==="-" ? `<del>${esc(t)}</del>` : `<ins>${esc(t)}</ins>`).join("") : `<del>${esc(h.old)}</del><ins>${esc(h.new)}</ins>`}</div>
+    </div>`).join("") + `</div>`).join("") || `<div class="empty">Tutto controllato.</div>`;
+  if(!$("#review").classList.contains("show")) toggleModal("review", true);
+  if(focus!=null && focus>=0) setTimeout(()=>{ const el = $("#hk-"+focus); if(el){ el.scrollIntoView({block:"center", behavior:"smooth"}); el.classList.add("flash"); setTimeout(()=>el.classList.remove("flash"), 1600); } }, 260);
+}
+$("#aichg").onclick = ()=>openReview();
+$("#rvList").addEventListener("click", async e=>{
+  const b = e.target.closest("[data-hop]"); if(!b) return;
+  const card = b.closest(".hunk"), h = CHG.hunks[+card.dataset.i], op = b.dataset.hop;
+  b.disabled = true;
+  const r = await api("/api/changes","POST",{op, hunk:h});
+  if(!r.ok){ b.disabled = false; return toast(r.error || "Operazione non riuscita", 5000); }
+  card.classList.add("gone"); await new Promise(res=>setTimeout(res, 240));
+  if(op==="revert"){  // la revisione collegata torna da fare
+    for(const id of h.ids){ const it = items.find(x=>x.id===id);
+      if(it && ["done","skipped"].includes(it.status)) Object.assign(it, await api("/api/items/"+id,"PATCH",{status:"open", ai_note:"Hai annullato la modifica dell'AI: la revisione torna aperta."})); }
+  }
+  await loadChanges(); openReview();
+  if(op==="revert") toast("Modifica annullata nel file", 5000, {label:"Compila", fn:()=>$("#bCompile").click()});
+  if(!CHG.hunks.length){ toggleModal("review", false); toast(op==="revert" ? "Tutto controllato · ricompila per aggiornare il PDF" : "Tutto controllato"); }
+});
+$("#rvKeepAll").onclick = async ()=>{ await api("/api/changes","POST",{op:"keep-all"}); await loadChanges(); toggleModal("review", false); toast("Modifiche dell'AI accettate"); };
+
 // ---------------------------------------------------------------- revisori umani
 let author = ""; try{ author = localStorage.getItem("r2k-author") || ""; }catch(e){}
 function shareLinks(){
@@ -1812,10 +2232,10 @@ $("#bCompile").onclick = async ()=>{
   b.classList.add("busy"); b.querySelector("span").textContent="Compilo…"; toast("Compilazione in corso…", 60000);
   const r = await api("/api/compile","POST",{});
   b.classList.remove("busy"); b.querySelector("span").textContent="Compila";
-  if(r.ok){ toast("Compilazione completata"); loadPdf(); } else toast("Errori di compilazione\n"+(r.errors.join("\n")||r.tail.slice(-800)), 9000);
+  if(r.ok){ toast("Compilazione completata"); loadPdf({diff:true}); loadChanges(); } else toast("Errori di compilazione\n"+(r.errors.join("\n")||r.tail.slice(-800)), 9000);
 };
 async function refreshItems(){
-  const d = await api("/api/items"); items = d.items || []; PINFO = d.info;
+  const d = await api("/api/items"); items = d.items || []; PINFO = d.info; CHAPTERS = d.chapters || {};
   if(PINFO){
     $("#pname").textContent = PINFO.name; $("#pname").title = PINFO.root; document.title = PINFO.name + " · Revision2000";
     $("#pmeta").textContent = PINFO.kind==="latex" ? `LaTeX · ${PINFO.main}` : "PDF importato";
@@ -1825,7 +2245,7 @@ async function refreshItems(){
   renderList(); drawHighlights(); return d;
 }
 let lastMtime = 0;
-window.addEventListener("focus", async ()=>{ if(!PID) return; const d = await refreshItems(); if(d.pdf_mtime!==lastMtime){ lastMtime=d.pdf_mtime; if(d.pdf_mtime) loadPdf(); } });
+window.addEventListener("focus", async ()=>{ if(!PID) return; const d = await refreshItems(); loadChanges(); if(d.pdf_mtime!==lastMtime){ lastMtime=d.pdf_mtime; if(d.pdf_mtime) loadPdf({diff:true}); } });
 
 // ---------------------------------------------------------------- schermata progetti
 const open_ = id => location.href = "/?p=" + encodeURIComponent(id);
@@ -1989,7 +2409,7 @@ function applyDock(d, animate){
     const from = {left:"translateX(-40px)", right:"translateX(40px)", top:"translateY(-40px)", bottom:"translateY(40px)"}[eff];
     rail.animate([{opacity:0, transform:from}, {opacity:1, transform:"none"}], {duration:480, easing:"cubic-bezier(.2,.9,.25,1.12)"});
   }
-  placeKnob(); placeToolInd(); updateCoach();
+  placeKnob(); placeToolInd(); updateCoach(); drawMap(); placePills();
 }
 // la barra si prende dalla maniglia o da qualsiasi punto vuoto e si lascia su un bordo
 $("#rail").addEventListener("pointerdown", e=>{
@@ -2016,7 +2436,7 @@ function beginRailDrag(e){
   const nearest = (x,y)=>{ const d = {left:x, right:innerWidth-x, top:y*1.6, bottom:(innerHeight-y)*1.6}; return Object.keys(d).reduce((a,b)=>d[a]<=d[b]?a:b); };
   return {
     move(ev){
-      g.style.left = (ev.clientX-ox)+"px"; g.style.top = (ev.clientY-oy)+"px";
+      g.style.translate = `${ev.clientX-e.clientX}px ${ev.clientY-e.clientY}px`;
       target = nearest(ev.clientX, ev.clientY);
       ov.querySelectorAll(".dz").forEach(z=>z.classList.toggle("on", z.dataset.d===target));
     },
@@ -2027,17 +2447,95 @@ function beginRailDrag(e){
       if(changed){ dock = t; try{ localStorage.setItem("r2k-dock", dock); }catch(_){} applyDock(dock, false); }
       // FLIP: viewer e pannello scivolano nella nuova posizione
       if(changed) els.forEach((x,i)=>{ const a = first[i], b = x.getBoundingClientRect();
-        x.animate([{transform:`translate(${a.left-b.left}px,${a.top-b.top}px)`}, {transform:"none"}], {duration:560, easing:"cubic-bezier(.2,.9,.25,1.05)"}); });
+        x.animate([{transform:`translate(${a.left-b.left}px,${a.top-b.top}px)`}, {transform:"none"}], {duration:440, easing:"cubic-bezier(.2,.9,.25,1.05)"}); });
       const nr = rail.getBoundingClientRect(), gr = g.getBoundingClientRect();
       g.animate([{opacity:1, transform:lift},
                  {opacity:0, transform:`translate(${nr.left+nr.width/2-(gr.left+gr.width/2)}px,${nr.top+nr.height/2-(gr.top+gr.height/2)}px) scale(.8)`}],
                 {duration:340, easing:"cubic-bezier(.4,0,.2,1)", fill:"forwards"}).finished.then(()=>g.remove());
       rail.classList.remove("lifting");
-      rail.animate([{opacity:0, transform:"scale(.9)"}, {opacity:1, transform:"none"}], {duration:460, delay:140, easing:"cubic-bezier(.2,.9,.25,1.25)", fill:"backwards"});
+      rail.animate([{opacity:0, transform:"scale(.9)"}, {opacity:1, transform:"none"}], {duration:380, delay:100, easing:"cubic-bezier(.2,.9,.25,1.2)", fill:"backwards"});
       if(changed) toast("Barra spostata · trascinala di nuovo quando vuoi");
     }
   };
 }
+// mappa: un segno per ogni revisione (e per ogni punto cambiato nel PDF) accanto alla barra di scorrimento
+function drawMap(){
+  const m = $("#map"), V = $("#viewer");
+  if(!PID || !pdf || innerWidth < 900){ m.classList.remove("show"); return; }
+  const v = V.getBoundingClientRect(), sb = V.offsetWidth - V.clientWidth;
+  m.style.left = (v.right - sb - 16)+"px"; m.style.top = (v.top+12)+"px"; m.style.height = (v.height-24)+"px"; m.classList.add("show");
+  const H = V.scrollHeight, mh = v.height-24, out = [];
+  for(const it of items){
+    if(!inView(it)) continue;
+    const r = (it.rects||[])[0], P = pages[r ? r.page : it.page]; if(!P) continue;
+    out.push(`<i class="${isActive(it)?"":"d"}" data-id="${it.id}" style="top:${(P.div.offsetTop + (r ? r.y*P.div.offsetHeight : 0))/H*mh}px;--c:${color(it.action)}"></i>`);
+  }
+  if(chgShown) for(const g of chgGroups){ const P = pages[g.p]; if(P) out.push(`<i class="ch" style="top:${(P.div.offsetTop + g.y*P.div.offsetHeight)/H*mh}px"></i>`); }
+  m.querySelector(".mmarks").innerHTML = out.join("");
+  mapThumb();
+}
+function mapThumb(){
+  const m = $("#map"), V = $("#viewer"), mh = m.clientHeight, t = m.querySelector(".mthumb");
+  t.style.top = (V.scrollTop/V.scrollHeight*mh)+"px"; t.style.height = Math.max(18, V.clientHeight/V.scrollHeight*mh)+"px";
+}
+$("#viewer").addEventListener("scroll", ()=>{ if($("#map").classList.contains("show")) mapThumb(); }, {passive:true});
+function pageAtMap(y){
+  const V = $("#viewer"), m = $("#map"), abs = y / m.clientHeight * V.scrollHeight;
+  for(const P of pages){ if(P && abs < P.div.offsetTop + P.div.offsetHeight + 10) return P; }
+  return pages[pages.length-1];
+}
+$("#map").addEventListener("pointerdown", e=>{
+  const m = $("#map"), mk = e.target.closest("i[data-id]");
+  if(mk){ const it = items.find(i=>i.id===mk.dataset.id); if(it){ gotoItem(it); const c = document.getElementById("it-"+it.id); if(c) c.scrollIntoView({block:"nearest", behavior:"smooth"}); } return; }
+  e.preventDefault(); m.classList.add("drag");
+  const V = $("#viewer"), go = ev=>{ const r = m.getBoundingClientRect(); V.scrollTop = (ev.clientY - r.top)/r.height*V.scrollHeight - V.clientHeight/2; };
+  go(e);
+  const up = ()=>{ m.classList.remove("drag"); removeEventListener("pointermove", go); removeEventListener("pointerup", up); };
+  addEventListener("pointermove", go); addEventListener("pointerup", up);
+});
+$("#map").addEventListener("pointermove", e=>{
+  const m = $("#map"), r = m.getBoundingClientRect(), P = pageAtMap(e.clientY - r.top), tip = $("#maptip"); if(!P) return;
+  const n = +P.div.dataset.page, k = items.filter(i=>inView(i) && (i.page===n)).length, cv = P.div.querySelector("canvas");
+  if(tip._n !== n){
+    tip._n = n; tip.innerHTML = "";
+    if(cv){ const c = document.createElement("canvas"); c.width = 220; c.height = Math.round(220*cv.height/cv.width); c.getContext("2d").drawImage(cv, 0, 0, c.width, c.height); tip.appendChild(c); }
+    tip.insertAdjacentHTML("beforeend", `Pagina ${n}${k ? ` · ${k} ${k===1?"revisione":"revisioni"}` : ""}`);
+  }
+  tip.style.left = (r.left - tip.offsetWidth - 10)+"px"; tip.style.top = Math.max(8, Math.min(innerHeight - tip.offsetHeight - 8, e.clientY - tip.offsetHeight/2))+"px";
+  tip.classList.add("show");
+});
+$("#map").addEventListener("pointerleave", ()=>{ $("#maptip").classList.remove("show"); $("#maptip")._n = null; });
+
+// tour guidato sui veri pulsanti, al primo progetto aperto
+const TOUR = [
+  {t:"#viewer", h:"Seleziona il problema", p:"Evidenzia una frase nel PDF: accanto si apre il riquadro per dire cosa fare.", inset:40},
+  {t:"#tgroup", h:"Gli strumenti", p:"Testo per le frasi, Area per figure e spazi vuoti, Modifica per correggere tu il LaTeX al volo."},
+  {t:"#list", h:"Le tue revisioni", p:"Finiscono qui, divise per capitolo. Trascinale su Fatta, Dopo o Elimina; con J e K le rivedi una per una."},
+  {t:"#bPrompt", h:"Invia all'AI", p:"Quando hai finito copi il prompt per il tuo agente, oppure scarichi lo ZIP per una chat. Poi controlli cosa ha cambiato."},
+  {t:"#grip", h:"Mettila dove vuoi", p:"Prendi la barra e lasciala su un bordo. Il pannello si allarga trascinandone il bordo sinistro."},
+];
+let tourI = 0;
+function startTour(){ revClose(); tourI = 0; $("#tour").classList.add("show"); paintTour(); }
+function endTour(){ $("#tour").classList.remove("show"); try{ localStorage.setItem("r2k-tour","1"); }catch(_){} }
+function tourStep(d){ const n = tourI + d; if(n >= TOUR.length) return endTour(); if(n < 0) return; tourI = n; paintTour(); }
+function paintTour(){
+  const st = TOUR[tourI], el = $(st.t); if(!el) return tourStep(1);
+  const r = el.getBoundingClientRect(), pad = st.inset ? -st.inset : 6;
+  const sp = $("#tour .spot"), x = r.left-pad, y = r.top-pad, w = r.width+pad*2, h = r.height+pad*2;
+  Object.assign(sp.style, {left:x+"px", top:y+"px", width:w+"px", height:h+"px"});
+  const b = $("#tour .tbub");
+  b.innerHTML = `<div class="tbody"><div class="tstep">${tourI+1} di ${TOUR.length}</div><b>${st.h}</b><p>${st.p}</p></div>
+    <div class="trow"><button class="tskip">Salta</button><span class="dots">${TOUR.map((_,i)=>`<i class="${i===tourI?"on":""}"></i>`).join("")}</span><button class="tnext">${tourI===TOUR.length-1?"Inizia":"Avanti"}</button></div>`;
+  const bw = 320, bh = b.offsetHeight, M = 16;
+  let bx, by;
+  if(x + w + M + bw < innerWidth){ bx = x + w + M; by = y + Math.min(h/2, 120) - 30; }
+  else if(x - M - bw > 0){ bx = x - M - bw; by = y + Math.min(h/2, 120) - 30; }
+  else { bx = x + w/2 - bw/2; by = y + h + M; if(by + bh > innerHeight - M) by = y - bh - M; }
+  b.style.left = Math.max(M, Math.min(innerWidth - bw - M, bx))+"px"; b.style.top = Math.max(M, Math.min(innerHeight - bh - M, by))+"px";
+  b.querySelector(".tnext").onclick = ()=>tourStep(1); b.querySelector(".tskip").onclick = endTour;
+}
+$("#tourBtn").onclick = ()=>{ toggleModal("guide", false); if(PID) setTimeout(startTour, 300); else toast("Apri un progetto per fare il tour"); };
+
 // pannello delle revisioni: si allarga trascinandone il bordo, doppio clic per tornare com'era
 (()=>{
   const z = document.createElement("div"); z.className = "rsz"; z.title = "Trascina per allargare il pannello · doppio clic per ripristinare";
@@ -2050,20 +2548,20 @@ function beginRailDrag(e){
     z.classList.add("on"); document.body.classList.add("resizing");
     const mv = ev=>{ w = setW(w0 + (x0 - ev.clientX)); };
     const up = ()=>{ removeEventListener("pointermove", mv); removeEventListener("pointerup", up); z.classList.remove("on"); document.body.classList.remove("resizing");
-      try{ localStorage.setItem("r2k-pw", w); }catch(_){} placeKnob(); updateCoach(); };
+      try{ localStorage.setItem("r2k-pw", w); }catch(_){} placeKnob(); updateCoach(); drawMap(); placePills(); };
     addEventListener("pointermove", mv); addEventListener("pointerup", up);
   });
   z.addEventListener("dblclick", ()=>{
     document.body.classList.add("gridanim"); document.body.style.removeProperty("--pw"); w = 0;
     try{ localStorage.removeItem("r2k-pw"); }catch(_){}
-    setTimeout(()=>{ document.body.classList.remove("gridanim"); placeKnob(); updateCoach(); }, 520);
+    setTimeout(()=>{ document.body.classList.remove("gridanim"); placeKnob(); updateCoach(); drawMap(); placePills(); }, 520);
   });
 })();
 (async()=>{
   applyDock(dock, false);
   placeKnob(); addEventListener("resize", ()=>{ applyDock(dock, false); });
   let seenGuide = false; try{ seenGuide = !!localStorage.getItem("r2k-guide"); localStorage.setItem("r2k-guide","1"); }catch(e){}
-  if(!seenGuide) setTimeout(()=>toggleModal("guide", true), 700);  // primo avvio: guida automatica
+  if(!seenGuide && !PID) setTimeout(()=>toggleModal("guide", true), 700);  // primo avvio: guida automatica
   setTimeout(()=>document.documentElement.classList.remove("preload"), 120);
   if(!PID) return showHome();
   const d = await refreshItems();
@@ -2071,6 +2569,9 @@ function beginRailDrag(e){
   lastMtime = d.pdf_mtime;
   if(d.pdf_mtime) await loadPdf();
   else $("#pages").innerHTML = `<div class="blank">Nessun PDF per questo progetto.<br>Premi ${icon("play")} per compilarlo.</div>`;
+  loadChanges();
+  let toured = false; try{ toured = !!localStorage.getItem("r2k-tour"); }catch(e){}
+  if(!toured && d.pdf_mtime) setTimeout(startTour, 900);  // primo progetto aperto: tour guidato
 })();
 </script>
 </body>

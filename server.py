@@ -6,6 +6,7 @@ Opzioni: --main main.tex  --port 8765  --no-browser
 Revisioni: progetto LaTeX -> <cartella>/_review/ ; PDF importati -> ~/.revision2000/pdfs/<id>/_review/
 """
 import argparse
+import difflib
 import hashlib
 import json
 import os
@@ -22,7 +23,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-__version__ = "1.9.0"
+__version__ = "2.0.0"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
@@ -301,7 +302,133 @@ class Project:
             return {"ok": False, "error": where}
         with open(p, "w", encoding="utf-8", newline="") as f:
             f.write(out)
+        self._mirror_base(rel, line, old, new)
         return {"ok": True, "file": rel, "line": where}
+
+    # ------------------------------------------------------------ modifiche dell'AI
+    # Al momento dell'invio si salva una copia dei .tex (baseline): quello che cambia dopo e' opera dell'AI
+    # e si puo' controllare punto per punto, tenendolo o annullandolo.
+    @property
+    def base_path(self):
+        return self.review_dir / "baseline.json"
+
+    @staticmethod
+    def _read_src(p):
+        with open(p, encoding="utf-8", errors="replace", newline="") as f:
+            return f.read()
+
+    def snapshot(self):
+        if self.kind != "latex":
+            return
+        files = {self.rel(f): self._read_src(f) for f in self.tex_files()}
+        tmp = self.base_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"taken": datetime.now().isoformat(timespec="seconds"), "files": files}, ensure_ascii=False), encoding="utf-8")
+        os.replace(tmp, self.base_path)
+
+    def load_base(self):
+        try:
+            return json.loads(self.base_path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+
+    def _save_base(self, b):
+        tmp = self.base_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(b, ensure_ascii=False), encoding="utf-8")
+        os.replace(tmp, self.base_path)
+
+    def _mirror_base(self, rel, line, old, new):
+        """Le modifiche fatte a mano dall'autore non sono dell'AI: le riporta anche nella baseline."""
+        b = self.load_base()
+        if not b or rel not in b["files"]:
+            return
+        out, _ = self._replace_near(b["files"][rel], old, new, line)
+        if out is not None:
+            b["files"][rel] = out
+            self._save_base(b)
+
+    @staticmethod
+    def _wdiff(a, b):
+        tok = lambda x: re.findall(r"\s+|\w+|[^\w\s]", x)
+        ta, tb = tok(a), tok(b)
+        out = []
+        for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, ta, tb, autojunk=False).get_opcodes():
+            if tag == "equal":
+                out.append(["=", "".join(ta[i1:i2])])
+            else:
+                if i2 > i1:
+                    out.append(["-", "".join(ta[i1:i2])])
+                if j2 > j1:
+                    out.append(["+", "".join(tb[j1:j2])])
+        return out
+
+    def changes(self):
+        b = self.load_base()
+        if not b:
+            return {"taken": None, "hunks": []}
+        items = self.load()["items"]
+        hunks = []
+        for rel, old in b["files"].items():
+            f = self.root / rel
+            new = self._read_src(f) if f.exists() else ""
+            if new == old:
+                continue
+            a, c = old.splitlines(keepends=True), new.splitlines(keepends=True)
+            for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, a, c, autojunk=False).get_opcodes():
+                if tag == "equal":
+                    continue
+                o, n = "".join(a[i1:i2]), "".join(c[j1:j2])
+                ids = [it["id"] for it in items if it.get("file") == rel and it.get("action") != "edit" and (
+                    (it.get("line") and i1 <= it["line"] <= max(i2, i1 + 1) + 1)
+                    or (it.get("source_match") and len(it["source_match"]) > 12 and it["source_match"][:60] in o))]
+                hunks.append({"file": rel, "bs": i1, "cs": j1, "line": j1 + 1, "old": o, "new": n,
+                              "words": self._wdiff(o, n) if len(o) + len(n) < 20000 else None, "ids": ids})
+        return {"taken": b.get("taken"), "hunks": hunks}
+
+    @staticmethod
+    def _swap_lines(text, start, expected, repl):
+        lines = text.splitlines(keepends=True)
+        k = len(expected.splitlines(keepends=True))
+        if "".join(lines[start:start + k]) != expected:
+            return None
+        lines[start:start + k] = repl.splitlines(keepends=True)
+        return "".join(lines)
+
+    def change_op(self, h, op):
+        rel = h.get("file", "")
+        b = self.load_base()
+        if not b or rel not in b["files"]:
+            raise ValueError("Niente da controllare: invia prima le revisioni all'AI.")
+        if op == "revert":  # il file torna com'era prima dell'AI, solo in questo punto
+            f = self._tex_path(rel)
+            out = self._swap_lines(self._read_src(f), h["cs"], h["new"], h["old"])
+            if out is None:
+                raise ValueError("Il file e' cambiato nel frattempo: chiudi e riapri il controllo.")
+            with open(f, "w", encoding="utf-8", newline="") as fh:
+                fh.write(out)
+        else:  # tieni: la baseline accoglie la modifica, che non viene piu' proposta
+            out = self._swap_lines(b["files"][rel], h["bs"], h["old"], h["new"])
+            if out is None:
+                raise ValueError("Il controllo non e' aggiornato: chiudi e riapri.")
+            b["files"][rel] = out
+            self._save_base(b)
+        return {"ok": True}
+
+    def chapters(self):
+        """Titolo del capitolo di ogni file .tex, per raggruppare le revisioni."""
+        out = {}
+        if self.kind != "latex":
+            return out
+        for f in self.tex_files():
+            try:
+                txt = self._read_src(f)  # capitolo, oppure la prima sezione (tesi che non usano \chapter)
+                m = (re.search(r"\\chapter\*?\s*(?:\[([^\]]*)\])?\s*\{([^}]*)\}", txt)
+                     or re.search(r"\\section\*?\s*(?:\[([^\]]*)\])?\s*\{([^}]*)\}", txt))
+            except OSError:
+                continue
+            if m:  # il titolo breve [..] se c'e'; via a capo (\\) e comandi
+                t = re.sub(r"\\\\", " ", m.group(1) or m.group(2))
+                out[self.rel(f)] = re.sub(r"\s+", " ", re.sub(r"\\[a-zA-Z]+\*?\s*", "", t)).strip()
+        return out
 
     # ------------------------------------------------------------ revisori umani
     SHARE_FIELDS = ("action", "note", "priority", "scope", "mode", "page", "pdf_text", "area", "rects", "status", "created", "author",
@@ -858,10 +985,16 @@ def make_handler():
                 d["pdf_mtime"] = proj.pdf.stat().st_mtime if proj.pdf.exists() else 0
                 d["actions"] = {k: v[0] for k, v in ACTIONS.items()}
                 d["info"] = proj.info()
+                d["chapters"] = proj.chapters()
                 return self.send(200, d)
             if u.path == "/api/prompt":
+                proj.snapshot()  # da qui in poi le modifiche ai .tex sono quelle dell'AI
                 return self.send(200, {"prompt": proj.prompt((q.get("mode") or ["agent"])[0])})
+            if u.path == "/api/changes":
+                with LOCK:
+                    return self.send(200, proj.changes())
             if u.path in ("/api/export.zip", "/api/export.md"):
+                proj.snapshot()
                 if u.path.endswith(".md"):  # solo il report, senza i file del progetto
                     proj.write_md(proj.load())
                     data, fname = proj.md_path.read_bytes(), f"{safe_name(proj.name)}_revisioni.md"
@@ -911,6 +1044,16 @@ def make_handler():
                     d["items"].append(b)
                     proj.save(d)
                 return self.send(200, b)
+            if u.path == "/api/changes":
+                b = self.body()
+                try:
+                    with LOCK:
+                        if b.get("op") == "keep-all":
+                            proj.snapshot()
+                            return self.send(200, {"ok": True})
+                        return self.send(200, proj.change_op(b.get("hunk") or {}, b.get("op")))
+                except (ValueError, KeyError) as e:
+                    return self.send(400, {"ok": False, "error": str(e)})
             if u.path == "/api/import":
                 try:
                     with LOCK:

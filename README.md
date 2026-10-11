@@ -180,13 +180,28 @@ Altre scorciatoie: **G** aggiunge una nota generale sulla pagina corrente, **Ctr
 revisione salvata. Cliccando una revisione nella lista vai al punto nel PDF; *Modifica* la riapre per
 cambiare testo o azione.
 
+**Pennarello**: per *Elimina*, *Riformula*, *Citazione*, *Verifica* e *Mi piace* c'è l'interruttore
+**Fissa**. Accendilo e salva: da quel momento ogni frase che selezioni diventa subito una revisione con
+quell'azione, senza riquadro. **Esc** spegne il pennarello.
+
+Sul PDF le revisioni hanno i **segni del correttore**: barrato per *Elimina* e *Sostituisci*, segno di
+inserimento per *Inserisci dopo*, sottolineatura ondulata per *Riformula*, puntinata per *Citazione* e
+*Verifica*. Accanto alla barra di scorrimento c'è la **mappa**: un trattino colorato per ogni revisione
+su tutto il documento; passandoci sopra vedi l'anteprima della pagina, cliccando ci vai.
+
+Nel pannello le revisioni sono **raggruppate per capitolo** (si possono chiudere). Da **Filtri** scegli
+ordinamento (pagina, più recenti, priorità), azione e chi le ha segnalate. **Rivedi** (o i tasti **J** e
+**K**) le scorre una per una con il PDF che segue, e con *Fatta* o *Dopo* decidi al volo. Le schede si
+possono anche **trascinare** su *Fatta*, *Dopo* o *Elimina*; il pannello si allarga trascinandone il bordo.
+
 Il simbolo ⚠ indica una revisione non collegata al testo sorgente (formule, tabelle, testo generato
 da macro). L'AI userà la riga indicata da SyncTeX.
 
-Nella barra: progetti, nota generale, zoom, ricarica PDF, compila, pagina corrente, **Guida**
-(ⓘ, si apre anche da sola al primo avvio), scorciatoie (**?**) e lo slider del tema (chiaro / seppia / scuro, vale anche per il PDF).
+Nella barra: progetti, strumenti (Testo, Area, Modifica), nota generale, zoom, ricarica PDF, compila,
+pagina corrente, **Guida** (ⓘ, con il *tour guidato* che parte da solo la prima volta che apri un
+progetto), scorciatoie (**?**) e lo slider del tema (chiaro / seppia / scuro, vale anche per il PDF).
 Quando riapri un progetto riparti dalla pagina in cui eri rimasto. La barra si può spostare:
-trascinala dalla maniglia ⠿ e rilasciala a sinistra, a destra, in alto o in basso.
+prendila dalla maniglia ⠿ o da un punto vuoto e rilasciala a sinistra, a destra, in alto o in basso.
 
 ---
 
@@ -211,6 +226,21 @@ Premi **Invia all'AI** e scegli una delle due strade. La finestra ti guida passo
 
 Infine premi **Compila** (pdflatex/xelatex + bibtex/biber, file temporanei in `build/`): il PDF
 si ricarica da solo.
+
+### Controllare cosa ha cambiato l'AI
+
+Quando copi il prompt o scarichi lo ZIP, Revision2000 si tiene una copia dei `.tex` di quel momento.
+Quando l'AI ha lavorato compare l'avviso **«L'AI ha cambiato N punti · Controlla»**: si apre l'elenco
+delle modifiche, capitolo per capitolo, con le parole tolte in rosso e quelle aggiunte in verde e le
+revisioni a cui si riferiscono. Per ognuna scegli **Tieni** oppure **Annulla**: *Annulla* rimette nel
+file il testo di prima, solo in quel punto, e riapre la revisione collegata. *Tieni tutte* le accetta
+in blocco. Dalla scheda di una revisione fatta, *Vedi cosa ha cambiato l'AI* porta dritto alla modifica.
+Le correzioni che fai tu (*Modifica diretta*, *Applica al .tex*) non vengono scambiate per modifiche
+dell'AI.
+
+Dopo ogni **Compila** (o *Ricarica*) il PDF evidenzia in verde **cosa è cambiato** rispetto alla
+versione precedente (in rosso i punti dove è stato tolto del testo). In basso la pillola
+*«Il PDF è cambiato in N punti»* ti porta da una modifica all'altra; *Nascondi* toglie i segni.
 
 ### Revisione con altre persone
 
