@@ -237,6 +237,8 @@ body.areamode .textLayer{pointer-events:none}
 .textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:2}
 .textLayer span,.textLayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0 0}
 .textLayer ::selection{background:color-mix(in srgb,var(--replace) 32%,transparent)}
+.textLayer{text-align:initial}
+.textLayer span.markedContent{top:0;height:0}
 .textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:-1;cursor:default;user-select:none}
 .hl{position:absolute;z-index:1;mix-blend-mode:var(--hl-blend);opacity:var(--hl-op);border-radius:3px;cursor:pointer;animation:hlin .35s cubic-bezier(.2,.8,.2,1) both;transition:opacity .2s}
 .hl:hover{opacity:calc(var(--hl-op) + .15)}
@@ -302,7 +304,7 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
 @keyframes fade{from{opacity:0}}
 
 /* ---------------------------------------------------------------- popup */
-#pop{position:fixed;z-index:50;width:470px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+#pop{position:fixed;z-index:50;width:min(480px,calc(100vw - 24px));background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
   border-radius:22px;box-shadow:var(--shadow-l);padding:14px;display:none;opacity:0;transform:translateY(6px) scale(.97);transform-origin:top left;
   transition:opacity .18s ease,transform .26s cubic-bezier(.2,.9,.25,1.15)}
 #pop.show{opacity:1;transform:none}
@@ -316,9 +318,12 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
 .chip.on kbd{color:color-mix(in srgb,var(--pri-ink) 60%,transparent)}
 #popText{width:100%;min-height:84px;font:13px/1.55 "JetBrains Mono",Consolas,monospace;background:var(--sunken);border:1.5px solid transparent;border-radius:14px;padding:10px 12px;resize:vertical;outline:none}
 #popText:focus{border-color:color-mix(in srgb,var(--ink) 25%,transparent);background:var(--card)}
-#pop .row{display:flex;gap:10px;align-items:center;margin-top:10px;font-size:12px;color:var(--mut)}
-#pop .row .sp{flex:1}
-#popSave{background:var(--pri);color:var(--pri-ink);border-radius:999px;padding:8px 16px;font-weight:600;font-size:13px}
+#pop .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:12px;font-size:12.5px;color:var(--mut)}
+#pop .row .sp{flex:1 1 0;min-width:0}
+#pop .row .pill-select{padding-top:7px;padding-bottom:7px}
+#popSave{display:inline-flex;align-items:center;gap:8px;background:var(--pri);color:var(--pri-ink);border-radius:999px;padding:8px 10px 8px 16px;font-weight:600;font-size:13px;white-space:nowrap}
+#popSave kbd{background:color-mix(in srgb,var(--pri-ink) 18%,transparent);color:inherit;box-shadow:none;font-size:11px}
+#pop .switch{white-space:nowrap}
 .switch{display:inline-flex;align-items:center;gap:7px;cursor:pointer;user-select:none;color:var(--ink-2);font-weight:500}
 .switch input{display:none}
 .switch i{width:30px;height:18px;border-radius:999px;background:var(--line);position:relative;transition:background-color .25s}
@@ -496,12 +501,11 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
   <div id="popLbl"></div>
   <textarea id="popText" placeholder=""></textarea>
   <div class="row">
-    <select class="pill-select" id="popPrio"><option value="normale">Priorità normale</option><option value="alta">Priorità alta</option><option value="bassa">Priorità bassa</option></select>
+    <select class="pill-select" id="popPrio" title="Priorità"><option value="normale">Normale</option><option value="alta">Alta priorità</option><option value="bassa">Bassa priorità</option></select>
     <label class="switch" id="propSw" title="L'AI non modifica: ti propone 3 alternative tra cui scegliere"><input type="checkbox" id="popProp"><i></i>Proponi</label>
     <label class="switch" id="allSw" title="Applica la stessa correzione a tutte le occorrenze"><input type="checkbox" id="popAll"><i></i>Ovunque</label>
     <span class="sp"></span>
-    <span class="hint"><kbd>1</kbd>–<kbd>9</kbd> azione · <kbd>↵</kbd> salva</span>
-    <button id="popSave">Salva</button>
+    <button id="popSave">Salva <kbd>↵</kbd></button>
   </div>
 </div>
 
@@ -680,6 +684,13 @@ function captureSelection(){
   const s = window.getSelection();
   if(!s || s.isCollapsed || !s.toString().trim()) return null;
   const range = s.getRangeAt(0);
+  // lo strato di testo del PDF non coincide sempre al pixel con le lettere: se la selezione taglia
+  // una parola all'inizio o alla fine, la allarghiamo alla parola intera
+  const W = /[\p{L}\p{N}]/u;
+  const sc = range.startContainer, ec = range.endContainer;
+  if(sc.nodeType===3){ let o = range.startOffset; while(o>0 && W.test(sc.data[o-1])) o--; range.setStart(sc, o); }
+  if(ec.nodeType===3){ let o = range.endOffset; while(o<ec.data.length && W.test(ec.data[o])) o++; range.setEnd(ec, o); }
+  s.removeAllRanges(); s.addRange(range);
   const pg = pageOf(range.startContainer); if(!pg) return null;
   const rects = [];
   for(const r of range.getClientRects()){
@@ -716,7 +727,7 @@ function openPop(sel, anchorRect){
   $("#popPrio").value="normale";
   const pop=$("#pop"); clearTimeout(pop._h); pop.style.display="block";
   const r = anchorRect || {left:innerWidth/2-235, bottom:innerHeight/3};
-  pop.style.left = Math.min(innerWidth-486, Math.max(12, r.left))+"px";
+  pop.style.left = Math.max(12, Math.min(innerWidth-pop.offsetWidth-12, r.left))+"px";
   pop.style.top = Math.max(12, Math.min(innerHeight-pop.offsetHeight-12, r.bottom+10))+"px";
   requestAnimationFrame(()=>pop.classList.add("show"));
   if(document.activeElement) document.activeElement.blur(); // 1-9 scelgono l'azione, poi si scrive
