@@ -34,7 +34,7 @@ try{ document.documentElement.dataset.theme = localStorage.getItem("r2k-theme") 
   --ink:#f1e6d2; --ink-2:#d2c3aa; --mut:#a39279; --line:#51463b;
   --rail:#241f1a; --rail-ink:#b3a48e; --rail-hover:rgba(255,236,205,.08);
   --pri:#f0e1c4; --pri-ink:#2e2721;
-  --paper:#e9dbc1; --pdf-filter:url(#r2k-sepia); --hl-blend:multiply; --hl-op:.34;
+  --paper:#e9dbc1; --pdf-filter:url(#r2k-pdf); --hl-blend:multiply; --hl-op:.34;
   --shadow-s:0 1px 2px rgba(15,9,3,.3);
   --shadow:0 1px 2px rgba(15,9,3,.3),0 10px 26px -8px rgba(15,9,3,.45);
   --shadow-l:0 2px 8px rgba(15,9,3,.35),0 26px 64px -12px rgba(15,9,3,.6);
@@ -750,6 +750,26 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
 .fchips button{background:var(--sunken);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-2);font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:background-color .15s,color .15s}
 .fchips button i{width:7px;height:7px;border-radius:50%;background:var(--c)}
 .fchips button.on{background:var(--pri);color:var(--pri-ink)}
+/* regolazione del PDF per tema (doppio clic sul tema) */
+#tone{position:fixed;z-index:60;width:290px;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-l);padding:14px 16px 12px;display:none;opacity:0;
+  transform:scale(.95);transition:opacity .15s,transform .22s cubic-bezier(.2,.9,.25,1.15)}
+#tone.show{opacity:1;transform:none}
+#tone .th{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+#tone .th b{font-size:13.5px}
+#tone .th .sp{flex:1}
+#tone .th button{font-size:12px;color:var(--mut);padding:3px 8px;border-radius:999px}
+#tone .th button:hover{background:var(--sunken);color:var(--ink)}
+#tone .tprev{display:flex;align-items:baseline;gap:10px;padding:12px 14px;border-radius:12px;margin-bottom:12px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 10%,transparent);
+  font:15px/1.3 Georgia,"Times New Roman",serif;transition:background-color .15s,color .15s}
+#tone .tprev big{font-size:24px}
+#tone .tr{display:grid;grid-template-columns:1fr auto;gap:4px 8px;margin-bottom:10px;font-size:12.5px;color:var(--ink-2)}
+#tone .tr em{font-style:normal;font-variant-numeric:tabular-nums;color:var(--mut);font-size:12px}
+#tone input[type=range]{grid-column:1/-1;-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:999px;background:var(--g,var(--sunken));margin:2px 0;cursor:pointer;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 12%,transparent)}
+#tone input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:0;box-shadow:0 1px 4px rgba(0,0,0,.35),0 0 0 1px rgba(0,0,0,.08);transition:transform .15s}
+#tone input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:0;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+#tone input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+#tone .tnote{font-size:11.5px;color:var(--mut);margin:2px 0 0}
 .grp{display:flex;align-items:center;gap:8px;margin:14px 4px 8px;font-size:12px;color:var(--mut);cursor:pointer;user-select:none}
 .grp:first-child{margin-top:2px}
 .grp b{color:var(--ink-2);font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%}
@@ -784,8 +804,8 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute">
-  <!-- tema seppia: il bianco del PDF diventa crema, il nero un marrone scuro -->
-  <filter id="r2k-sepia" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values=".745 0 0 0 .169  0 .737 0 0 .122  0 0 .675 0 .082  0 0 0 1 0"/></filter>
+  <!-- colori del PDF per tema: il bianco diventa il colore del foglio, il nero quello dell inchiostro (valori calcolati in applyTone) -->
+  <filter id="r2k-pdf" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values=".745 0 0 0 .169  0 .737 0 0 .122  0 0 .675 0 .082  0 0 0 1 0"/></filter>
   <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 1.5c.5 5.6 4.9 10 10.5 10.5-5.6.5-10 4.9-10.5 10.5C11.5 16.9 7.1 12.5 1.5 12 7.1 11.5 11.5 7.1 12 1.5z"/></symbol>
   <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></symbol>
   <symbol id="i-note" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7.5L14 20H6.5A2.5 2.5 0 0 1 4 17.5z"/><path d="M14 20v-3.5a2.5 2.5 0 0 1 2.5-2.5H20M8.5 9h7M8.5 12.5h4"/></symbol>
@@ -854,9 +874,9 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
   <button class="rb" id="bInfo" title="Come funziona"><svg class="i"><use href="#i-info"/></svg><span>Guida</span></button>
   <button class="rb" id="bKeys" title="Scorciatoie da tastiera (?)"><svg class="i"><use href="#i-keys"/></svg><span>Tasti</span></button>
   <div class="tslider v" data-theme-slider><span class="knob"></span>
-    <button data-t="light" title="Tema chiaro"><svg class="i"><use href="#i-sun"/></svg></button>
-    <button data-t="sepia" title="Tema seppia"><svg class="i"><use href="#i-cup"/></svg></button>
-    <button data-t="dark" title="Tema scuro"><svg class="i"><use href="#i-moon"/></svg></button>
+    <button data-t="light" title="Tema chiaro (doppio clic: regola il PDF)"><svg class="i"><use href="#i-sun"/></svg></button>
+    <button data-t="sepia" title="Tema seppia (doppio clic: regola il PDF)"><svg class="i"><use href="#i-cup"/></svg></button>
+    <button data-t="dark" title="Tema scuro (doppio clic: regola il PDF)"><svg class="i"><use href="#i-moon"/></svg></button>
   </div>
 </nav>
 
@@ -900,6 +920,7 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
 <div id="map"><div class="mthumb"></div><div class="mmarks"></div></div>
 <div id="maptip"></div>
 <div id="tour"><div class="spot"></div><div class="tbub"></div></div>
+<div id="tone"></div>
 <div id="coach"><span class="demo"><i></i><svg class="i"><use href="#i-cursor"/></svg></span>Seleziona una frase nel PDF per segnalare un problema</div>
 
 <div id="pop">
@@ -925,9 +946,9 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
     <div><h1>Revision2000</h1><p>Annota il PDF, l'AI applica le correzioni al sorgente.</p></div>
     <button class="hbtn" id="bInfo2"><svg class="i"><use href="#i-info"/></svg>Come funziona</button>
     <div class="tslider h htheme2" data-theme-slider><span class="knob"></span>
-      <button data-t="light" title="Chiaro"><svg class="i"><use href="#i-sun"/></svg></button>
-      <button data-t="sepia" title="Seppia"><svg class="i"><use href="#i-cup"/></svg></button>
-      <button data-t="dark" title="Scuro"><svg class="i"><use href="#i-moon"/></svg></button>
+      <button data-t="light" title="Chiaro (doppio clic: regola il PDF)"><svg class="i"><use href="#i-sun"/></svg></button>
+      <button data-t="sepia" title="Seppia (doppio clic: regola il PDF)"><svg class="i"><use href="#i-cup"/></svg></button>
+      <button data-t="dark" title="Scuro (doppio clic: regola il PDF)"><svg class="i"><use href="#i-moon"/></svg></button>
     </div>
   </div>
   <div class="chips-t" id="tools"></div>
@@ -971,6 +992,7 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
   <div class="kr">Rivedi una per una<span><kbd>J</kbd> avanti · <kbd>K</kbd> indietro</span></div>
   <div class="kr">Fatta / Dopo / Elimina<span>trascina la scheda</span></div>
   <div class="kr">Allarga il pannello<span>trascina il suo bordo</span></div>
+  <div class="kr">Regola i colori del PDF<span>doppio clic su un tema</span></div>
   <div class="kr">Zoom<span><kbd>Ctrl</kbd> <kbd>+</kbd> / <kbd>−</kbd></span></div>
   <div class="kr">Questo pannello<span><kbd>?</kbd></span></div>
 </div></div>
@@ -1429,6 +1451,7 @@ document.addEventListener("keydown", e=>{
     else if(e.key==="ArrowLeft"){ e.preventDefault(); tourStep(-1); }
     return;
   }
+  if(toneOpen() && e.key==="Escape"){ closeTone(); return; }
   if(edOpen()){
     if(e.key==="Escape"){ e.preventDefault(); closeEd(); }
     else if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); applyDirect(); }
@@ -1901,22 +1924,103 @@ function placeThemeKnobs(t){
     sl.querySelector(".knob").style.transform = sl.classList.contains("v") ? `translateY(${i*36}px)` : `translateX(${i*36}px)`;
   });
 }
+// colori del PDF per tema, regolabili con un doppio clic sul tema:
+// L = luminosità del foglio, K = contrasto dell'inchiostro, W = calore (0 neutro, 100 crema)
+const TONE_DEF = {light:{L:100,K:100,W:0}, sepia:{L:91,K:85,W:100}, dark:{L:11,K:88,W:0}};
+const TONE_MIN = {light:70, sepia:60, dark:2}, TONE_MAX = {light:100, sepia:100, dark:32};
+const THEME_NAME = {light:"chiaro", sepia:"seppia", dark:"scuro"};
+let tone = {}; try{ tone = JSON.parse(localStorage.getItem("r2k-tone")||"{}") || {}; }catch(e){}
+const toneOf = (t, over) => Object.assign({}, TONE_DEF[t], tone[t]||{}, over||{});
+function toneColors(t, over){
+  const v = toneOf(t, over), L = v.L/100, K = v.K/100, W = v.W/100, d = t==="dark";
+  const tint = (l, a, b) => [l, l*(1-a*W), l*(1-b*W)];
+  const inkL = L + ((d ? .97 : 0) - L)*K;
+  return {paper: tint(L, .06, .17), ink: d ? tint(inkL, .03, .09) : tint(inkL, .28, .5)};
+}
+const toHex = c => "#"+c.map(x=>Math.round(Math.max(0,Math.min(1,x))*255).toString(16).padStart(2,"0")).join("");
+function applyTone(t){
+  const root = document.documentElement, {paper, ink} = toneColors(t), d = t==="dark";
+  // il filtro porta il nero in "lo" e il bianco in "hi"; nello scuro il PDF viene prima invertito (tinte conservate)
+  const hi = d ? ink : paper, lo = d ? paper : ink;
+  const m = [0,1,2].map(i=>{ const r = [0,0,0,0,0]; r[i] = (hi[i]-lo[i]).toFixed(4); r[4] = lo[i].toFixed(4); return r.join(" "); }).join("  ") + "  0 0 0 1 0";
+  document.querySelector("#r2k-pdf feColorMatrix").setAttribute("values", m);
+  const plain = t==="light" && !tone.light;
+  root.style.setProperty("--paper", toHex(paper));
+  root.style.setProperty("--pdf-filter", plain ? "none" : d ? "invert(1) hue-rotate(180deg) url(#r2k-pdf)" : "url(#r2k-pdf)");
+}
+function paintTone(){
+  const box = $("#tone"), t = box.dataset.t, v = toneOf(t), {paper, ink} = toneColors(t);
+  const grad = k => { const lo = k==="L" ? TONE_MIN[t] : 0, hi = k==="L" ? TONE_MAX[t] : 100;
+    return [lo, (lo+hi)/2, hi].map(x=>{ const c = toneColors(t, {[k]:x}); return toHex(k==="K" ? c.ink : c.paper); }).join(","); };
+  box.querySelector(".tprev").style.cssText = `background:${toHex(paper)};color:${toHex(ink)}`;
+  box.querySelectorAll("input").forEach(inp=>{ const k = inp.dataset.k; inp.value = v[k]; inp.style.setProperty("--g", `linear-gradient(90deg,${grad(k)})`);
+    inp.closest(".tr").querySelector("em").textContent = v[k]+"%"; });
+  box.querySelector("[data-reset]").style.visibility = tone[t] ? "" : "hidden";
+}
+function openTone(t, btn){
+  const box = $("#tone"); clearTimeout(box._h); box.dataset.t = t;
+  const row = (k, l) => `<label class="tr"><span>${l}</span><em></em><input type="range" data-k="${k}" min="${k==="L"?TONE_MIN[t]:0}" max="${k==="L"?TONE_MAX[t]:100}"></label>`;
+  box.innerHTML = `<div class="th"><b>PDF nel tema ${THEME_NAME[t]}</b><span class="sp"></span><button data-reset>Ripristina</button></div>
+    <div class="tprev"><big>Aa</big>Capitolo 1 · Introduzione</div>
+    ${row("L", t==="dark" ? "Luminosità dello sfondo" : "Luminosità del foglio")}${row("K","Contrasto del testo")}${row("W","Calore")}
+    <p class="tnote">Cambia solo il PDF. Ogni tema ha le sue regolazioni.</p>`;
+  paintTone(); box.style.display = "block";
+  // accanto alla barra se è verticale, sotto (o sopra) se è orizzontale
+  const sl = btn.closest("[data-theme-slider]"), rail = btn.closest(".rail"), vert = rail ? !rail.classList.contains("horiz") : sl.classList.contains("v");
+  const a = (rail || sl).getBoundingClientRect(), r = btn.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight, M = 12;
+  let x, y;
+  if(vert){ x = a.right + M; if(x + w > innerWidth - M) x = a.left - w - M; y = r.top + r.height/2 - h/2; }
+  else { x = r.left + r.width/2 - w/2; y = a.bottom + M; if(y + h > innerHeight - M) y = a.top - h - M; }
+  box.style.left = Math.max(M, Math.min(innerWidth - w - M, x))+"px"; box.style.top = Math.max(M, Math.min(innerHeight - h - M, y))+"px";
+  box.style.transformOrigin = `${r.left + r.width/2 - parseFloat(box.style.left)}px ${r.top + r.height/2 - parseFloat(box.style.top)}px`;
+  requestAnimationFrame(()=>box.classList.add("show"));
+}
+function closeTone(){ const box = $("#tone"); if(!box.classList.contains("show")) return; box.classList.remove("show"); box._h = setTimeout(()=>box.style.display = "none", 200); }
+const toneOpen = () => $("#tone").classList.contains("show");
+$("#tone").addEventListener("input", e=>{
+  const k = e.target.dataset.k, t = $("#tone").dataset.t; if(!k) return;
+  tone[t] = Object.assign({}, tone[t], {[k]: +e.target.value});
+  if(JSON.stringify(toneOf(t)) === JSON.stringify(TONE_DEF[t])) delete tone[t];
+  try{ localStorage.setItem("r2k-tone", JSON.stringify(tone)); }catch(_){}
+  if(document.documentElement.dataset.theme === t) applyTone(t);
+  paintTone();
+});
+$("#tone").addEventListener("click", e=>{
+  if(!e.target.closest("[data-reset]")) return;
+  const t = $("#tone").dataset.t; delete tone[t];
+  try{ localStorage.setItem("r2k-tone", JSON.stringify(tone)); }catch(_){}
+  if(document.documentElement.dataset.theme === t) applyTone(t);
+  paintTone();
+});
+document.addEventListener("pointerdown", e=>{ if(toneOpen() && !e.target.closest("#tone,[data-theme-slider]")) closeTone(); });
+// doppio clic sul tema: lo riconosco a mano perché durante l'animazione del cambio tema
+// il secondo clic non arriva al pulsante (lo cattura la transizione)
+let themeClick = null;
+function themeDbl(e, t, btn){
+  const l = themeClick, now = performance.now();
+  if(l && now - l.at < 450 && Math.hypot(e.clientX - l.x, e.clientY - l.y) < 14 && (!t || t === l.t)){ themeClick = null; openTone(l.t, l.b); return true; }
+  themeClick = t ? {t, b:btn, at:now, x:e.clientX, y:e.clientY} : null; return false;
+}
+document.addEventListener("click", e=>{ if(themeClick && !e.target.closest("[data-theme-slider]")) themeDbl(e); }, true);
+
 function setTheme(t, ev){
   if(!["light","sepia","dark"].includes(t)) t = "light";
   try{ localStorage.setItem("r2k-theme", t); }catch(e){}
   const root = document.documentElement;
   // i colori delle azioni cambiano col tema: ridisegna chip, lista ed evidenziazioni
-  const apply = ()=>{ root.dataset.theme = t; placeThemeKnobs(t); paintChips(); renderList(); drawHighlights(); };
+  const apply = ()=>{ root.dataset.theme = t; applyTone(t); placeThemeKnobs(t); paintChips(); renderList(); drawHighlights();
+    if(toneOpen() && $("#tone").dataset.t !== t) closeTone(); };
+  if(setTheme._to === t) return;  // secondo clic di un doppio clic: la transizione è già partita
   if(ev && document.startViewTransition && root.dataset.theme !== t && !matchMedia("(prefers-reduced-motion: reduce)").matches){
     const x = ev.clientX || innerWidth/2, y = ev.clientY || innerHeight/2, rad = Math.hypot(Math.max(x, innerWidth-x), Math.max(y, innerHeight-y));
     root.classList.add("vt-theme");
-    const tr = document.startViewTransition(apply);
+    setTheme._to = t; const tr = document.startViewTransition(apply);
     tr.ready.then(()=>root.animate({clipPath:[`circle(0px at ${x}px ${y}px)`, `circle(${rad}px at ${x}px ${y}px)`]},
       {duration:720, easing:"cubic-bezier(.4,0,.2,1)", pseudoElement:"::view-transition-new(root)"})).catch(()=>{});
-    tr.finished.finally(()=>root.classList.remove("vt-theme"));
+    tr.finished.finally(()=>{ root.classList.remove("vt-theme"); setTheme._to = null; });
   } else apply();
 }
-document.querySelectorAll("[data-theme-slider]").forEach(sl=>sl.addEventListener("click", e=>{ const b=e.target.closest("button"); if(b) setTheme(b.dataset.t, e); }));
+document.querySelectorAll("[data-theme-slider]").forEach(sl=>sl.addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; setTheme(b.dataset.t, e); themeDbl(e, b.dataset.t, b); }));
 let savedTheme = "light"; try{ savedTheme = localStorage.getItem("r2k-theme") || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"); }catch(e){}
 setTheme(savedTheme);
 
