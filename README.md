@@ -163,6 +163,11 @@ prossimo invio. *Nessuna mi convince* chiede altre alternative, diverse da quell
 sulla pagina. Si apre l'azione *Impaginazione*. L'area viene collegata al punto del sorgente con SyncTeX
 e l'AI riceve istruzioni apposite: sistema il layout senza riscrivere il testo.
 
+**Scegliere cosa inviare**: ogni revisione aperta ha un cerchio di spunta. Solo quelle spuntate
+finiscono nel report, nello ZIP e nel prompt del prossimo invio (*Seleziona tutte* / *Nessuna* in cima
+alla lista). Con l'orologio ⏱ **posticipi** una revisione: non viene inviata finché non la riprendi
+dal filtro **Dopo** (Aperte · Dopo · Tutte).
+
 Altre scorciatoie: **G** aggiunge una nota generale sulla pagina corrente, **Ctrl+Z** annulla l'ultima
 revisione salvata. Cliccando una revisione nella lista vai al punto nel PDF; *Modifica* la riapre per
 cambiare testo o azione.

@@ -226,6 +226,21 @@ body.areamode .textLayer{pointer-events:none}
 .prop:hover{border-color:var(--insert);background:color-mix(in srgb,var(--insert) 8%,var(--card));transform:translateX(2px)}
 .prop small{display:block;color:var(--mut);font-size:11.5px;margin-top:3px}
 .props .linkb{justify-self:start;margin-top:2px}
+/* selezione per l'invio e posticipate */
+.item .h .pick{width:20px;height:20px;border-radius:50%;border:1.6px solid var(--line);display:grid;place-items:center;flex:none;color:transparent;
+  transition:background-color .2s,border-color .2s,color .2s,transform .25s cubic-bezier(.3,1.4,.5,1)}
+.item .h .pick:hover{border-color:var(--ink-2)}
+.item .h .pick.on{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+.item .h .pick svg{width:12px;height:12px;stroke-width:2.4}
+.item.unsel{opacity:.6}
+.item.unsel:hover{opacity:.85}
+.item.later{opacity:.7;border:1.5px dashed var(--line);box-shadow:none}
+.selbar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);padding:0 4px}
+.selbar:empty{display:none}
+.selbar b{color:var(--ink);font-weight:600}
+.selbar button{color:var(--ink-2);font-weight:500;text-decoration:underline;text-underline-offset:3px}
+.selbar button:hover{color:var(--ink)}
+.selbar .sp{flex:1}
 .item .st.wait{background:color-mix(in srgb,var(--rewrite) 15%,transparent);color:var(--rewrite)}
 .item.style .q{border-left-color:var(--like);font-style:italic}
 .item.proposed{box-shadow:0 0 0 1.5px color-mix(in srgb,var(--rewrite) 45%,transparent),var(--shadow-s)}
@@ -445,6 +460,7 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 18.5V7a2.5 2.5 0 0 1 2.5-2.5h9A2.5 2.5 0 0 1 19 7v6.5a2.5 2.5 0 0 1-2.5 2.5H9z"/><path d="M9 9h6M9 12h4"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 17v1a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1"/></symbol>
   <symbol id="i-area" viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M9 12h6M12 9v6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
   <symbol id="i-tex" viewBox="0 0 24 24"><path d="M4 6h7M7.5 6v12M11 10h5l-1.5 4L16 18h-5M16 6l4 6-4 6"/></symbol>
 </svg>
 
@@ -488,10 +504,11 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
   <div class="tools">
     <label class="search"><svg class="i"><use href="#i-search"/></svg><input type="search" id="q" placeholder="Cerca nelle revisioni"></label>
     <div class="frow">
-      <div class="seg" id="fSeg"><span class="knob"></span><button data-v="open" class="on">Aperte</button><button data-v="all">Tutte</button></div>
+      <div class="seg" id="fSeg"><span class="knob"></span><button data-v="open" class="on">Aperte</button><button data-v="later" title="Revisioni posticipate">Dopo</button><button data-v="all">Tutte</button></div>
       <select class="pill-select" id="fAct"><option value="">Ogni azione</option></select>
     </div>
   </div>
+  <div class="selbar" id="selbar" style="margin:0 20px 8px"></div>
   <div id="list"></div>
 </aside>
 
@@ -620,7 +637,7 @@ const ZOOMS = [0.75, 1, 1.25, 1.5, 1.75, 2, 2.5];
 const $ = s => document.querySelector(s);
 const color = a => getComputedStyle(document.documentElement).getPropertyValue("--"+a).trim() || "#888";
 const icon = (id, cls="i") => `<svg class="${cls}"><use href="#i-${id}"/></svg>`;
-let pdf, scale = 1.5, pages = [], items = [], pending = null, curAct = "replace", picking = null, undoStack = [], showAll = false;
+let pdf, scale = 1.5, pages = [], items = [], pending = null, curAct = "replace", picking = null, undoStack = [], showAll = false, view = "open";
 const seen = new Set();
 
 function toast(msg, ms=2600){
@@ -890,7 +907,7 @@ function openEdit(it){
 function drawHighlights(){
   document.querySelectorAll(".hl").forEach(h=>h.remove());
   for(const it of items){
-    if(!isActive(it) && !showAll) continue;
+    if(!inView(it)) continue;
     for(const r of it.rects||[]){
       const P = pages[r.page]; if(!P) continue;
       const h = document.createElement("div"); h.className="hl"+(it.area?" area":"")+(isActive(it)?"":" done"); h.dataset.id=it.id;
@@ -926,15 +943,20 @@ function body(it){
   return `<div class="q">${q}</div>`;
 }
 const isActive = it => ["open","proposed","style"].includes(it.status || "open");
+const isSel = it => it.selected !== false;               // spuntata per il prossimo invio (default sì)
+const inView = it => view==="all" || (view==="later" ? it.status==="later" : isActive(it));
 function renderList(){
   const open = items.filter(i=>i.status==="open").length, toPick = items.filter(i=>i.status==="proposed").length;
   const revs = items.filter(i=>i.status!=="style"), closed = revs.filter(i=>["done","skipped"].includes(i.status)).length;
   animateNumber($("#count"), open);
+  const later = items.filter(i=>i.status==="later").length, selN = items.filter(i=>i.status==="open" && isSel(i)).length;
   $("#countl").innerHTML = `${open===1?"revisione aperta":"revisioni aperte"}<br>` +
-    (toPick ? `<b style="color:var(--rewrite)">${toPick} da scegliere</b> · ` : "") + `${closed} completate su ${revs.length}`;
+    (toPick ? `<b style="color:var(--rewrite)">${toPick} da scegliere</b> · ` : "") + (later ? `${later} dopo · ` : "") + `${closed} completate su ${revs.length}`;
+  $("#selbar").innerHTML = view==="open" && open ? `<span><b>${selN}</b> di ${open} nel prossimo invio</span><span class="sp"></span>
+    <button data-selall="1">Seleziona tutte</button><button data-selall="0">Nessuna</button>` : "";
   $("#prog").style.width = (revs.length? closed/revs.length*100:0)+"%";
   const q = $("#q").value.trim().toLowerCase(), fa = $("#fAct").value;
-  const vis = items.filter(i=>(showAll || isActive(i)) && (!fa || i.action===fa) && (!q || [i.id,i.note,i.pdf_text,i.file,i.ai_note].join(" ").toLowerCase().includes(q)))
+  const vis = items.filter(i=>inView(i) && (!fa || i.action===fa) && (!q || [i.id,i.note,i.pdf_text,i.file,i.ai_note].join(" ").toLowerCase().includes(q)))
     .sort((a,b)=>(a.page||0)-(b.page||0) || ((a.rects[0]||{}).y||0)-((b.rects[0]||{}).y||0));
   let k = 0;
   $("#list").innerHTML = vis.map(it=>{
@@ -942,12 +964,14 @@ function renderList(){
     const short = f => (f||"").split("/").pop();
     const loc = it.file ? `${short(it.file)}:${it.line}` : "";
     const unanchored = it.pdf_text && !it.area && PINFO && PINFO.kind==="latex" && !it.source_match;
-    const st = it.status==="proposed" ? `<span class="st wait">da scegliere</span>`
+    let st_; const st = it.status==="proposed" ? `<span class="st wait">da scegliere</span>`
       : ["done","skipped"].includes(it.status) ? `<span class="st">${it.status==="done"?"fatta":"saltata"}</span>`
       : it.mode==="propose" && it.status==="open" ? `<span class="st">proposte</span>`
       : (it.priority==="alta"?`<span class="st prio">alta</span>`:"");
-    return `<div class="item ${it.status}${isNew?" new":""}" id="it-${it.id}" data-id="${it.id}" style="--c:${color(it.action)};--k:${isNew?k++:0}">
-      <div class="h"><span class="tag">${LABEL(it.action)}</span><span class="mono">${it.id}</span>${st}</div>
+    if(it.status==="later") st_ = `<span class="st">posticipata</span>`; else st_ = "";
+    const pick = it.status==="open" ? `<button class="pick${isSel(it)?" on":""}" data-op="sel" title="${isSel(it)?"Inclusa nel prossimo invio: clicca per escluderla":"Esclusa dal prossimo invio: clicca per includerla"}">${icon("check")}</button>` : "";
+    return `<div class="item ${it.status}${it.status==="open" && !isSel(it)?" unsel":""}${isNew?" new":""}" id="it-${it.id}" data-id="${it.id}" style="--c:${color(it.action)};--k:${isNew?k++:0}">
+      <div class="h">${pick}<span class="tag">${LABEL(it.action)}</span><span class="mono">${it.id}</span>${st_ || st}</div>
       ${body(it)}
       ${it.dest?`<div class="sub">${icon("arrow")}dopo «${esc(it.dest.pdf_text.slice(0,70))}» · p.${it.dest.page}</div>`:(it.action==="move"?`<div class="sub warn">${icon("alert")}manca il punto di arrivo: Modifica, poi Invio</div>`:"")}
       ${it.note && !["replace","insert"].includes(it.action)?`<div class="n">${esc(it.note)}</div>`:""}
@@ -956,7 +980,8 @@ function renderList(){
         ${it.proposals.map((p,i)=>`<button class="prop" data-op="pick" data-i="${i}">${esc(p.text||p)}${p.why?`<small>${esc(p.why)}</small>`:""}</button>`).join("")}
         <button class="linkb" data-op="redo">Nessuna mi convince: chiedi altre proposte</button></div>` : ""}
       <div class="sub">p.${it.page||"–"}${loc?` · <span class="mono">${esc(loc)}</span>`:""}${unanchored?` <span class="warn" title="Non collegata al testo sorgente: verrà usata la riga SyncTeX">${icon("alert")}</span>`:""}${it.scope==="all"?` · ${icon("all")}ovunque`:""}</div>
-      <div class="acts"><button class="ib" data-op="edit" title="Modifica">${icon("edit")}</button>${it.status==="style" ? "" : `<button class="ib" data-op="toggle" title="${isActive(it)?"Segna come fatta":"Riapri"}">${icon(isActive(it)?"check":"undo")}</button>`}<button class="ib danger" data-op="del" title="Elimina">${icon("trash")}</button></div>
+      <div class="acts"><button class="ib" data-op="edit" title="Modifica">${icon("edit")}</button>${["style","later"].includes(it.status) ? "" : `<button class="ib" data-op="toggle" title="${isActive(it)?"Segna come fatta":"Riapri"}">${icon(isActive(it)?"check":"undo")}</button>`}${["open","proposed"].includes(it.status) ? `<button class="ib" data-op="later" title="Posticipa: non la invio ora, la riprendo dopo">${icon("clock")}</button>`
+      : it.status==="later" ? `<button class="ib" data-op="resume" title="Riprendi: torna tra le aperte">${icon("undo")}</button>` : ""}<button class="ib danger" data-op="del" title="Elimina">${icon("trash")}</button></div>
     </div>`;}).join("") || (items.length && (q||fa) ? `<div class="empty">Nessun risultato.</div>`
       : items.length ? `<div class="empty">Tutto fatto.</div>`
       : `<div class="empty">Seleziona del testo nel PDF.<br><kbd>1</kbd>–<kbd>9</kbd> azione · <kbd>↵</kbd> salva · <kbd>G</kbd> nota generale<br><kbd>Ctrl</kbd> <kbd>Z</kbd> annulla l'ultima<br><button class="linkb" onclick="toggleModal('guide',true)">Prima volta? Apri la guida</button></div>`);
@@ -977,7 +1002,15 @@ $("#list").addEventListener("click", async e=>{
     Object.assign(it, await api("/api/items/"+it.id,"PATCH",{status:"open", mode:"propose", rejected, proposals:null}));
     renderList(); drawHighlights(); toast(`${it.id}: al prossimo invio l'AI proporrà alternative diverse`); return;
   }
-  if(op==="toggle"){ Object.assign(it, await api("/api/items/"+it.id,"PATCH",{status: isActive(it)?"done":"open"})); if(!showAll && !isActive(it)){ card.classList.add("leaving"); await new Promise(r=>setTimeout(r,220)); } renderList(); drawHighlights(); return; }
+  if(op==="sel"){ Object.assign(it, await api("/api/items/"+it.id,"PATCH",{selected: !isSel(it)})); renderList(); return; }
+  if(op==="later" || op==="resume"){
+    const patch = op==="later" ? {status:"later", prev_status: it.status} : {status: it.prev_status || "open"};
+    Object.assign(it, await api("/api/items/"+it.id,"PATCH",patch));
+    if(!inView(it)){ card.classList.add("leaving"); await new Promise(r=>setTimeout(r,220)); }
+    renderList(); drawHighlights();
+    toast(op==="later" ? `${it.id} posticipata · la ritrovi in «Dopo»` : `${it.id} di nuovo tra le aperte`); return;
+  }
+  if(op==="toggle"){ Object.assign(it, await api("/api/items/"+it.id,"PATCH",{status: isActive(it)?"done":"open"})); if(!inView(it)){ card.classList.add("leaving"); await new Promise(r=>setTimeout(r,220)); } renderList(); drawHighlights(); return; }
   if(op==="edit") return openEdit(it);
   // vai al punto
   const r=(it.rects||[])[0]; const P=pages[r?r.page:it.page]; if(!P) return;
@@ -988,9 +1021,15 @@ function placeKnob(){
   const on = $("#fSeg .on"), k = $("#fSeg .knob");
   k.style.width = on.offsetWidth+"px"; k.style.transform = `translateX(${on.offsetLeft}px)`;
 }
+$("#selbar").onclick = async e=>{
+  const b = e.target.closest("[data-selall]"); if(!b) return;
+  const on = b.dataset.selall==="1";
+  await Promise.all(items.filter(i=>i.status==="open" && isSel(i)!==on).map(async i=>Object.assign(i, await api("/api/items/"+i.id,"PATCH",{selected:on}))));
+  renderList();
+};
 $("#fSeg").onclick = e=>{
   const b = e.target.closest("button"); if(!b) return;
-  showAll = b.dataset.v==="all";
+  view = b.dataset.v; showAll = view==="all";
   document.querySelectorAll("#fSeg button").forEach(x=>x.classList.toggle("on", x===b));
   placeKnob(); renderList(); drawHighlights();
 };
@@ -1072,8 +1111,11 @@ $("#bKeys").onclick = ()=>toggleKeys();
 $("#bInfo").onclick = ()=>toggleModal("guide", true);
 $("#bInfo2").onclick = ()=>toggleModal("guide", true);
 function openSend(){
-  const open = items.filter(i=>i.status==="open").length, pdfOnly = PINFO && PINFO.kind==="pdf";
-  $("#sendLead").textContent = open ? `${open} ${open===1?"revisione aperta":"revisioni aperte"}. Scegli dove lavora la tua AI e segui i passi.`
+  const allOpen = items.filter(i=>i.status==="open").length, open = items.filter(i=>i.status==="open" && isSel(i)).length, pdfOnly = PINFO && PINFO.kind==="pdf";
+  const excl = allOpen-open, later = items.filter(i=>i.status==="later").length;
+  const extra = [excl ? `${excl} esclus${excl===1?"a":"e"}` : "", later ? `${later} posticipat${later===1?"a":"e"}` : ""].filter(Boolean).join(", ");
+  $("#sendLead").textContent = open ? `Invierai ${open} ${open===1?"revisione":"revisioni"}${extra ? ` (${extra})` : ""}. Scegli dove lavora la tua AI e segui i passi.`
+    : allOpen ? "Nessuna revisione selezionata: spunta nel pannello quelle da inviare."
                                     : "Non ci sono revisioni aperte: selezionane prima qualcuna nel PDF.";
   $("#sendOpts").innerHTML = `
     <div class="opt">

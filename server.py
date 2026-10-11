@@ -22,7 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
@@ -388,7 +388,8 @@ class Project:
     # ------------------------------------------------------------ markdown export
     def write_md(self, data):
         items = data.get("items", [])
-        open_items = [i for i in items if i.get("status", "open") == "open"]
+        # solo le revisioni aperte e spuntate per l'invio (le posticipate hanno status "later")
+        open_items = [i for i in items if i.get("status", "open") == "open" and i.get("selected", True)]
         y0 = lambda i: (i.get("rects") or [{}])[0].get("y", 0)
         open_items.sort(key=lambda i: (i.get("file") or "~", i.get("line") or 0, i.get("col") or 0, i.get("page") or 0, y0(i)))
         L = []
