@@ -157,6 +157,21 @@ body[data-dock="bottom"]{grid-template-areas:"viewer panel" "rail rail";grid-tem
 .zoomv{padding:2px 0}
 .rail.horiz .zoomv{padding:0 4px}
 .rail.horiz .tslider{margin-left:4px}
+/* finestre basse (portatili): la barra verticale diventa compatta, solo icone (il nome resta nel suggerimento) */
+@media (max-height:860px){
+  .rail:not(.horiz){gap:1px;padding-top:6px;padding-bottom:8px}
+  .rail:not(.horiz) .rb{min-height:40px;padding:3px 0}
+  .rail:not(.horiz) .rb span{display:none}
+  .rail:not(.horiz) .logo{width:32px;height:32px;margin:0 0 2px}
+  .rail:not(.horiz) .logo svg{width:22px;height:22px}
+  .rail:not(.horiz) .sep{margin:3px 0}
+  .rail:not(.horiz) .zb{height:26px}
+  .rail:not(.horiz) .pageind{margin-bottom:2px}
+}
+/* ancora più basse: la barra scorre invece di tagliare i pulsanti in fondo */
+@media (max-height:640px){
+  .rail:not(.horiz){overflow-y:auto;scrollbar-width:none}
+}
 #dockov{position:fixed;inset:0;z-index:65;pointer-events:none;opacity:0;transition:opacity .2s}
 #dockov.show{opacity:1}
 #dockov .dz{position:absolute;border:2px dashed color-mix(in srgb,var(--ink) 25%,transparent);border-radius:28px;display:grid;place-items:center;color:var(--mut);font-size:12px;font-weight:600;
@@ -279,7 +294,7 @@ body.editmode .textLayer span:hover{background:color-mix(in srgb,var(--edit) 14%
 
 /* ---------------------------------------------------------------- viewer */
 #viewer{overflow:auto;position:relative;border-radius:24px;scroll-behavior:auto}
-#pages{display:flex;flex-direction:column;align-items:center;gap:20px;padding:20px 16px 50vh}
+#pages{display:flex;flex-direction:column;align-items:center;align-items:safe center;gap:20px;padding:20px 16px 50vh}
 .page{position:relative;background:var(--paper);box-shadow:var(--shadow);border-radius:6px}
 .page canvas{display:block;filter:var(--pdf-filter);border-radius:6px;animation:fade .45s ease both}
 .pnum{position:absolute;left:-40px;top:4px;color:var(--mut);font-size:11px;font-weight:500;font-variant-numeric:tabular-nums}
@@ -607,6 +622,15 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
 
 /* home: anteprima del PDF, avanzamento, rilascio ovunque */
 .pcard{padding:0;overflow:hidden}
+/* tour dalla schermata Progetti: si sceglie il progetto */
+.tourpick{display:none;align-items:center;gap:10px;margin:-4px 0 14px;padding:10px 12px 10px 16px;border-radius:14px;background:var(--pri);color:var(--pri-ink);font-weight:500;font-size:13.5px;animation:rise .35s cubic-bezier(.2,.8,.2,1) both}
+.tourpick span{flex:1}
+.tourpick button{color:inherit;opacity:.75;padding:4px 10px;border-radius:999px;font-size:12.5px}
+.tourpick button:hover{opacity:1;background:color-mix(in srgb,var(--pri-ink) 14%,transparent)}
+#home.picktour .tourpick{display:flex}
+#home.picktour .pcard{animation:pickpulse 1.8s ease-in-out infinite}
+#home.picktour .pcard:hover{animation:none;box-shadow:0 0 0 2px var(--ink),var(--shadow)}
+@keyframes pickpulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ink) 0%,transparent),var(--shadow-s)}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 22%,transparent),var(--shadow-s)}}
 .pcard .thumb{height:128px;background:var(--sunken);position:relative;overflow:hidden}
 .pcard .thumb::after{content:"";position:absolute;inset:auto 0 0;height:40px;background:linear-gradient(transparent,color-mix(in srgb,var(--sunken) 85%,transparent))}
 .pcard .thumb .tph{position:absolute;left:50%;top:16px;width:72%;height:150px;transform:translateX(-50%);background:var(--paper);border-radius:4px;box-shadow:var(--shadow-s)}
@@ -722,6 +746,10 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
 /* mappa delle revisioni accanto alla barra di scorrimento */
 #map{position:fixed;z-index:30;width:12px;border-radius:8px;cursor:pointer;display:none;touch-action:none;transition:width .18s,background-color .18s}
 #map.show{display:block}
+/* con la mappa attiva la barra di scorrimento verticale del sistema sparisce (resta quella orizzontale, sottile) */
+#viewer.mapped::-webkit-scrollbar{width:0;height:10px;background:transparent}
+#viewer.mapped::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--ink) 18%,transparent);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+#viewer.mapped::-webkit-scrollbar-corner{background:transparent}
 #map:hover,#map.drag{width:18px;background:color-mix(in srgb,var(--ink) 6%,transparent)}
 #map .mthumb{position:absolute;left:0;right:0;border-radius:6px;background:color-mix(in srgb,var(--ink) 11%,transparent);transition:background-color .18s}
 #map:hover .mthumb{background:color-mix(in srgb,var(--ink) 17%,transparent)}
@@ -954,6 +982,7 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
   </div>
   <div class="chips-t" id="tools"></div>
   <h2>Recenti <span class="cnt" id="pcount">0</span></h2>
+  <div class="tourpick" id="tourpick"><svg class="i"><use href="#i-cursor"/></svg><span>Scegli il progetto su cui fare il tour</span><button id="tourpickX">Annulla</button></div>
   <div class="grid" id="plist"></div>
   <h2>Nuovo progetto</h2>
   <div class="two two-eq">
@@ -1128,24 +1157,33 @@ async function api(path, method="GET", body){
 // ---------------------------------------------------------------- PDF
 async function loadPdf(opts={}){
   const keep = $("#viewer").scrollTop / Math.max(1,$("#viewer").scrollHeight);
-  pdf = await pdfjsLib.getDocument({url:withP("/pdf?t="+Date.now())}).promise;
-  const box = $("#pages"); box.innerHTML = ""; pages = [];
-  for(let i=1;i<=pdf.numPages;i++){
-    const p = await pdf.getPage(i);
+  const V0 = $("#viewer"), hx = V0.scrollWidth > V0.clientWidth ? V0.scrollLeft / (V0.scrollWidth - V0.clientWidth) : .5;
+  // più caricamenti di fila (zoom premuto due volte, compila + ricarica): vince l'ultimo,
+  // le pagine si preparano fuori dalla pagina e si sostituiscono tutte insieme
+  const gen = loadPdf._gen = (loadPdf._gen||0) + 1;
+  const doc = await pdfjsLib.getDocument({url:withP("/pdf?t="+Date.now())}).promise;
+  const np = [], frag = document.createDocumentFragment();
+  for(let i=1;i<=doc.numPages;i++){
+    const p = await doc.getPage(i);
+    if(gen !== loadPdf._gen) return;
     const vp = p.getViewport({scale});
     const d = document.createElement("div");
     d.className="page"; d.dataset.page=i; d.style.width=vp.width+"px"; d.style.height=vp.height+"px";
     d.innerHTML = `<span class="pnum">${i}</span>`;
-    box.appendChild(d);
-    pages[i] = {div:d, page:p, vp, rendered:false};
+    frag.appendChild(d);
+    np[i] = {div:d, page:p, vp, rendered:false};
   }
-  const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) renderPage(+e.target.dataset.page); }),{root:$("#viewer"),rootMargin:"800px"});
+  if(gen !== loadPdf._gen) return;
+  pdf = doc; pages = np; $("#pages").replaceChildren(frag);
+  if(loadPdf._io) loadPdf._io.disconnect();
+  const io = loadPdf._io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) renderPage(+e.target.dataset.page); }),{root:$("#viewer"),rootMargin:"800px"});
   pages.forEach(p=>p && io.observe(p.div));
   let pos = keep;
   if(!loadPdf._done){ loadPdf._done = true; try{ pos = +localStorage.getItem("r2k-pos-"+PID) || 0; }catch(e){} }  // riapre dove eri rimasto
-  $("#viewer").scrollTop = pos * $("#viewer").scrollHeight;
+  const V = $("#viewer");
+  V.scrollTop = pos * V.scrollHeight;
+  V.scrollLeft = hx * (V.scrollWidth - V.clientWidth);   // pagina più larga della finestra: resta centrata (o dove eri)
   drawHighlights(); updatePageInd(); updateCoach();
-  const doc = pdf;
   if(opts.diff || !docWords) extractWords(doc).then(W=>{ if(doc!==pdf) return; const was = docWords; docWords = W; if(opts.diff && was) showChanges(was, W); }).catch(()=>{});
   else if(chgShown) drawChg();
 }
@@ -1254,7 +1292,7 @@ function placePills(){
   b.style.left = x; b.style.top = (v.bottom-(aOn ? 170 : 118))+"px";
 }
 async function renderPage(i){
-  const P = pages[i]; if(P.rendered) return; P.rendered = true;
+  const P = pages[i]; if(!P || P.rendered) return; P.rendered = true;
   const {page, vp, div} = P;
   const c = document.createElement("canvas"); const dpr = window.devicePixelRatio||1;
   c.width = vp.width*dpr; c.height = vp.height*dpr; c.style.width=vp.width+"px"; c.style.height=vp.height+"px";
@@ -2604,7 +2642,8 @@ function beginRailDrag(e){
 // mappa: un segno per ogni revisione (e per ogni punto cambiato nel PDF) accanto alla barra di scorrimento
 function drawMap(){
   const m = $("#map"), V = $("#viewer");
-  if(!PID || !pdf || innerWidth < 900){ m.classList.remove("show"); return; }
+  if(!PID || !pdf || innerWidth < 900){ m.classList.remove("show"); V.classList.remove("mapped"); return; }
+  V.classList.add("mapped");
   const v = V.getBoundingClientRect(), sb = V.offsetWidth - V.clientWidth;
   m.style.left = (v.right - sb - 16)+"px"; m.style.top = (v.top+12)+"px"; m.style.height = (v.height-24)+"px"; m.classList.add("show");
   const H = V.scrollHeight, mh = v.height-24, out = [];
@@ -2627,11 +2666,14 @@ function pageAtMap(y){
   for(const P of pages){ if(P && abs < P.div.offsetTop + P.div.offsetHeight + 10) return P; }
   return pages[pages.length-1];
 }
+$("#map").addEventListener("wheel", e=>{ e.preventDefault(); $("#viewer").scrollBy({top:e.deltaY, left:e.deltaX}); }, {passive:false});
 $("#map").addEventListener("pointerdown", e=>{
   const m = $("#map"), mk = e.target.closest("i[data-id]");
   if(mk){ const it = items.find(i=>i.id===mk.dataset.id); if(it){ gotoItem(it); const c = document.getElementById("it-"+it.id); if(c) c.scrollIntoView({block:"nearest", behavior:"smooth"}); } return; }
   e.preventDefault(); m.classList.add("drag");
-  const V = $("#viewer"), go = ev=>{ const r = m.getBoundingClientRect(); V.scrollTop = (ev.clientY - r.top)/r.height*V.scrollHeight - V.clientHeight/2; };
+  // presa sul cursore: si trascina da dove l'hai preso; altrove: il cursore salta lì, centrato
+  const tr = m.querySelector(".mthumb").getBoundingClientRect(), off = e.clientY >= tr.top && e.clientY <= tr.bottom ? e.clientY - tr.top : tr.height/2;
+  const V = $("#viewer"), go = ev=>{ const r = m.getBoundingClientRect(); V.scrollTop = (ev.clientY - off - r.top)/r.height*V.scrollHeight; };
   go(e);
   const up = ()=>{ m.classList.remove("drag"); removeEventListener("pointermove", go); removeEventListener("pointerup", up); };
   addEventListener("pointermove", go); addEventListener("pointerup", up);
@@ -2680,12 +2722,12 @@ function paintTour(){
 $("#tourBtn").onclick = ()=>{
   toggleModal("guide", false);
   if(PID){ setTimeout(startTour, 300); return; }
-  // dalla schermata Progetti: apre il progetto più recente e il tour parte da solo
-  try{ localStorage.removeItem("r2k-tour"); }catch(_){}
-  const c = document.querySelector('.pcard[data-pdf="1"]');
-  if(c) setTimeout(()=>open_(c.dataset.id), 250);
-  else toast("Apri un progetto: il tour parte appena si apre", 4500);
+  // dalla schermata Progetti: scegli tu il progetto, il tour parte appena si apre
+  try{ sessionStorage.setItem("r2k-tour-next", "1"); }catch(_){}
+  if(!document.querySelector(".pcard")) return toast("Apri un progetto: il tour parte appena si apre", 4500);
+  $("#home").classList.add("picktour"); $("#tourpick").scrollIntoView({block:"center", behavior:"smooth"});
 };
+$("#tourpickX").onclick = ()=>{ $("#home").classList.remove("picktour"); try{ sessionStorage.removeItem("r2k-tour-next"); }catch(_){} };
 
 // pannello delle revisioni: si allarga trascinandone il bordo, doppio clic per tornare com'era
 (()=>{
@@ -2721,8 +2763,8 @@ $("#tourBtn").onclick = ()=>{
   if(d.pdf_mtime) await loadPdf();
   else $("#pages").innerHTML = `<div class="blank">Nessun PDF per questo progetto.<br>Premi ${icon("play")} per compilarlo.</div>`;
   loadChanges();
-  let toured = false; try{ toured = !!localStorage.getItem("r2k-tour"); }catch(e){}
-  if(!toured && d.pdf_mtime) setTimeout(startTour, 900);  // primo progetto aperto: tour guidato
+  let toured = false, next = false; try{ toured = !!localStorage.getItem("r2k-tour"); next = !!sessionStorage.getItem("r2k-tour-next"); sessionStorage.removeItem("r2k-tour-next"); }catch(e){}
+  if((!toured || next) && d.pdf_mtime) setTimeout(startTour, 900);  // primo progetto aperto: tour guidato
 })();
 </script>
 </body>
