@@ -163,6 +163,14 @@ prossimo invio. *Nessuna mi convince* chiede altre alternative, diverse da quell
 sulla pagina. Si apre l'azione *Impaginazione*. L'area viene collegata al punto del sorgente con SyncTeX
 e l'AI riceve istruzioni apposite: sistema il layout senza riscrivere il testo.
 
+**Modifica diretta** (senza AI): premi **Modifica** nella barra (o il tasto **E**), poi clicca una
+riga del PDF (viene presa tutta, es. il titolo) o seleziona un pezzo di testo. Si apre il **sorgente
+LaTeX** di quel punto: correggilo e premi Invio. Il `.tex` viene salvato subito e la tesi ricompilata.
+La sostituzione avviene solo se il testo nel file è ancora identico, le terminazioni di riga restano
+quelle del file e ogni modifica resta nello storico (filtro *Tutte*) con **Annulla modifica**; anche
+**Ctrl+Z** la annulla. Se il testo non si trova nel sorgente (es. è generato da una macro), puoi creare
+una revisione normale per l'AI.
+
 **Scegliere cosa inviare**: ogni revisione aperta ha un cerchio di spunta. Solo quelle spuntate
 finiscono nel report, nello ZIP e nel prompt del prossimo invio (*Seleziona tutte* / *Nessuna* in cima
 alla lista). Con l'orologio ⏱ **posticipi** una revisione: non viene inviata finché non la riprendi

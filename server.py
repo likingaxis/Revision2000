@@ -22,7 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-__version__ = "1.6.0"
+__version__ = "1.7.0"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
@@ -48,6 +48,7 @@ ACTIONS = {
                r"\sloppy/\emergencystretch locali. Preferisci la modifica piu' piccola e locale; non cambiare l'impostazione globale "
                "del documento senza segnalarlo in ai_note."),
     "like": ("MI PIACE", "Passaggio che piace all'autore: NON e' una revisione e non va modificato; usalo come riferimento di stile."),
+    "edit": ("MODIFICA DIRETTA", "Modifica gia' applicata a mano dall'autore: non fare nulla."),
     "general": ("NOTA GENERALE", "Nota non ancorata a un punto preciso: applicala dove pertinente."),
 }
 
@@ -247,7 +248,7 @@ class Project:
                 la, ca = toks[a][1], toks[a][2]
                 lb, cb = toks[b][1], toks[b][3]
                 # estendi alla punteggiatura finale immediatamente adiacente
-                m = re.match(r"[.,;:!?)\]}]*", lines[lb][cb:])
+                m = re.match(r"[.,;:!?]*", lines[lb][cb:])  # solo punteggiatura, non parentesi di comandi LaTeX
                 cb += len(m.group()) if m else 0
                 if la == lb:
                     match = lines[la][ca:cb]
@@ -263,6 +264,38 @@ class Project:
                 ctx = "\n".join(lines[a:b])
                 res["source_context"] = ctx if len(ctx) < 4000 else ctx[:4000] + " [...]"
         return res
+
+    # ------------------------------------------------------------ modifica diretta del sorgente
+    def _tex_path(self, rel):
+        p = (self.root / rel).resolve()
+        if self.kind != "latex" or self.root not in p.parents or p.suffix.lower() != ".tex" or not p.exists():
+            raise ValueError("File sorgente non valido.")
+        return p
+
+    @staticmethod
+    def _replace_near(text, old, new, line):
+        """Sostituisce l'occorrenza di `old` piu' vicina alla riga indicata. Ritorna (testo, riga) o (None, motivo)."""
+        if "\r\n" in text:  # mantieni le terminazioni di riga del file
+            old, new = old.replace("\r\n", "\n").replace("\n", "\r\n"), new.replace("\r\n", "\n").replace("\n", "\r\n")
+        pos, starts = text.find(old), []
+        while pos != -1 and old:
+            starts.append(pos)
+            pos = text.find(old, pos + 1)
+        if not starts:
+            return None, "Il testo nel file e' cambiato: ricompila o ricarica il PDF e riprova."
+        best = min(starts, key=lambda s: abs(text.count("\n", 0, s) + 1 - (line or 0)))
+        return text[:best] + new + text[best + len(old):], text.count("\n", 0, best) + 1
+
+    def apply_edit(self, rel, line, old, new):
+        p = self._tex_path(rel)
+        with open(p, encoding="utf-8", newline="") as f:
+            text = f.read()
+        out, where = self._replace_near(text, old, new, line)
+        if out is None:
+            return {"ok": False, "error": where}
+        with open(p, "w", encoding="utf-8", newline="") as f:
+            f.write(out)
+        return {"ok": True, "file": rel, "line": where}
 
     # ------------------------------------------------------------ compile
     def compile(self):
@@ -763,6 +796,15 @@ def make_handler():
             if u.path == "/api/locate":
                 b = self.body()
                 return self.send(200, proj.locate(b.get("page"), b.get("x", 0), b.get("y", 0), b.get("text", "")))
+            if u.path in ("/api/edit", "/api/edit/undo"):
+                # modifica diretta del .tex (undo = stessa operazione con old/new invertiti)
+                b = self.body()
+                old, new = (b.get("new", ""), b.get("old", "")) if u.path.endswith("undo") else (b.get("old", ""), b.get("new", ""))
+                try:
+                    with LOCK:
+                        return self.send(200, proj.apply_edit(b.get("file", ""), b.get("line"), old, new))
+                except ValueError as e:
+                    return self.send(400, {"ok": False, "error": str(e)})
             if u.path == "/api/items":
                 b = self.body()
                 with LOCK:

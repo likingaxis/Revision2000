@@ -25,7 +25,7 @@ try{ document.documentElement.dataset.theme = localStorage.getItem("r2k-theme") 
   --shadow-l:0 2px 6px rgba(20,20,25,.06),0 24px 60px -12px rgba(20,20,25,.22);
   --ai-bg:#eef6f0; --ai-ink:#25603c;
   --replace:#3b6fd9; --delete:#d9534f; --insert:#2e9e6a; --rewrite:#8b5cf6; --comment:#cf9a12;
-  --cite:#0e9aa7; --check:#e8743b; --move:#6b7280; --general:#52525b; --layout:#c2410c; --like:#db2777;
+  --cite:#0e9aa7; --check:#e8743b; --move:#6b7280; --general:#52525b; --layout:#c2410c; --like:#db2777; --edit:#0f766e;
 }
 :root[data-theme="sepia"]{
   --bg:#e7dfcf; --surface:#f5efe3; --card:#fbf7ef; --sunken:#ece3d2;
@@ -46,7 +46,7 @@ try{ document.documentElement.dataset.theme = localStorage.getItem("r2k-theme") 
   --shadow-l:0 2px 8px rgba(0,0,0,.5),0 28px 70px -12px rgba(0,0,0,.75);
   --ai-bg:#14271b; --ai-ink:#9fdcb4;
   --replace:#7096ff; --delete:#ff7a74; --insert:#4ccb8c; --rewrite:#ad8bff; --comment:#f0c24d;
-  --cite:#3cc8d4; --check:#ff995c; --move:#9ca3af; --general:#a1a1aa; --layout:#fb923c; --like:#f472b6;
+  --cite:#3cc8d4; --check:#ff995c; --move:#9ca3af; --general:#a1a1aa; --layout:#fb923c; --like:#f472b6; --edit:#2dd4bf;
 }
 *{box-sizing:border-box}
 .preload *,.preload *::before,.preload *::after{transition:none!important}
@@ -226,6 +226,30 @@ body.areamode .textLayer{pointer-events:none}
 .prop:hover{border-color:var(--insert);background:color-mix(in srgb,var(--insert) 8%,var(--card));transform:translateX(2px)}
 .prop small{display:block;color:var(--mut);font-size:11.5px;margin-top:3px}
 .props .linkb{justify-self:start;margin-top:2px}
+/* modifica diretta */
+body.editmode .textLayer span{cursor:text;border-radius:3px;transition:background-color .15s}
+body.editmode .textLayer span:hover{background:color-mix(in srgb,var(--edit) 14%,transparent)}
+#edpop{position:fixed;z-index:52;width:min(560px,calc(100vw - 24px));background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+  border-radius:22px;box-shadow:var(--shadow-l);padding:14px;display:none;opacity:0;transform:translateY(6px) scale(.97);transform-origin:top left;
+  transition:opacity .18s ease,transform .26s cubic-bezier(.2,.9,.25,1.15)}
+#edpop.show{opacity:1;transform:none}
+#edpop .edh{display:flex;align-items:center;gap:8px;margin:2px 2px 6px}
+#edpop .edh .tag{--c:var(--edit)}
+#edpop .edh .mono{color:var(--mut);margin-left:auto}
+#edpop .edinfo{font-size:12.5px;color:var(--ink-2);margin:0 2px 10px;line-height:1.45}
+#edpop .edinfo.warn{color:var(--delete)}
+#edText{width:100%;min-height:90px;font:13px/1.55 "JetBrains Mono",Consolas,monospace;background:var(--sunken);border:1.5px solid transparent;border-radius:14px;padding:10px 12px;resize:vertical;outline:none;color:var(--ink)}
+#edText:focus{border-color:color-mix(in srgb,var(--edit) 60%,transparent);background:var(--card)}
+#edpop .row{display:flex;gap:8px;align-items:center;margin-top:10px}
+#edpop .row .sp{flex:1}
+#edpop .row button{border-radius:999px;padding:8px 14px;font-weight:600;font-size:13px}
+#edCancel{background:var(--sunken);color:var(--ink-2)}
+#edAlt{background:transparent;color:var(--mut);text-decoration:underline;text-underline-offset:3px;font-weight:500!important;padding:8px 4px!important}
+#edSave{display:inline-flex;align-items:center;gap:8px;background:var(--edit);color:#fff;padding-right:10px!important}
+#edSave kbd{background:rgba(255,255,255,.2);color:inherit;box-shadow:none}
+#edSave:disabled{opacity:.5}
+.diff.src del,.diff.src ins{font:12px/1.5 "JetBrains Mono",Consolas,monospace}
+
 /* selezione per l'invio e posticipate */
 .item .h .pick{width:20px;height:20px;border-radius:50%;border:1.6px solid var(--line);display:grid;place-items:center;flex:none;color:transparent;
   transition:background-color .2s,border-color .2s,color .2s,transform .25s cubic-bezier(.3,1.4,.5,1)}
@@ -461,6 +485,7 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 17v1a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1"/></symbol>
   <symbol id="i-area" viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M9 12h6M12 9v6"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-type" viewBox="0 0 24 24"><path d="M4 7V5h12v2M10 5v14M7.5 19h5"/><path d="m14.5 19 1-3.5 4.5-4.5 2.5 2.5-4.5 4.5z"/></symbol>
   <symbol id="i-tex" viewBox="0 0 24 24"><path d="M4 6h7M7.5 6v12M11 10h5l-1.5 4L16 18h-5M16 6l4 6-4 6"/></symbol>
 </svg>
 
@@ -470,6 +495,7 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
   <button class="rb" id="bHome" title="Torna ai progetti"><svg class="i"><use href="#i-grid"/></svg><span>Progetti</span></button>
   <button class="rb" id="bGen" title="Nota sulla pagina corrente (G)"><svg class="i"><use href="#i-note"/></svg><span>Nota</span></button>
   <button class="rb" id="bArea" title="Seleziona un'area: figura, tabella, spazio vuoto (A, oppure Alt + trascina)"><svg class="i"><use href="#i-area"/></svg><span>Area</span></button>
+  <button class="rb" id="bEdit" title="Modifica diretta: clicca una riga e correggi tu il LaTeX (E)"><svg class="i"><use href="#i-type"/></svg><span>Modifica</span></button>
   <div class="sep"></div>
   <div class="zgroup" title="Zoom (Ctrl + / Ctrl -)">
     <button class="zb" id="bZout"><svg class="i"><use href="#i-minus"/></svg></button>
@@ -570,6 +596,7 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
   <h3>Scorciatoie</h3>
   <div class="kr">Scegli l'azione nel popup<span><kbd>1</kbd> … <kbd>9</kbd></span></div>
   <div class="kr">Segna un passaggio che ti piace<span><kbd>0</kbd></span></div>
+  <div class="kr">Modifica diretta del LaTeX (clicca una riga)<span><kbd>E</kbd></span></div>
   <div class="kr">Seleziona un'area (figura, spazio vuoto…)<span><kbd>A</kbd> oppure <kbd>Alt</kbd> + trascina</span></div>
   <div class="kr">Salva<span><kbd>↵</kbd></span></div>
   <div class="kr">A capo nel testo<span><kbd>Shift</kbd> <kbd>↵</kbd></span></div>
@@ -590,7 +617,8 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
     <li style="--k:2"><b>Scegli cosa fare</b><span>Nel riquadro che appare premi un tasto da 1 a 9 (Sostituisci, Elimina, Riformula…), scrivi la correzione e premi Invio.
       Per figure, tabelle o spazi vuoti usa <i>Area</i> (oppure Alt + trascina) e l'azione Impaginazione.
       Con <i>Proponi</i> attivo l'AI non decide da sola: ti propone 3 alternative tra cui scegliere.
-      Con <i>Mi piace</i> (tasto 0) segni i passaggi riusciti, così l'AI impara il tuo stile.</span></li>
+      Con <i>Mi piace</i> (tasto 0) segni i passaggi riusciti, così l'AI impara il tuo stile.
+      Per una correzione veloce fatta da te usa <i>Modifica</i> (tasto E): clicchi la riga, correggi il LaTeX e il file viene salvato subito.</span></li>
     <li style="--k:3"><b>Ripeti</b><span>Tutte le revisioni si raccolgono nel pannello a destra: cliccane una per ritrovarla nel PDF.</span></li>
     <li style="--k:4"><b>Premi «Invia all'AI»</b><span>Scegli dove lavora la tua AI:</span>
       <div class="alt">
@@ -612,6 +640,12 @@ kbd{font:500 11px "JetBrains Mono",monospace;background:var(--card);border-radiu
 <div id="dockov"><div class="dz" data-d="left">Sinistra</div><div class="dz" data-d="right">Destra</div><div class="dz" data-d="top">In alto</div><div class="dz" data-d="bottom">In basso</div></div>
 <div id="dockghost"><svg class="i"><use href="#i-grip"/></svg>Rilascia su un bordo</div>
 
+<div id="edpop">
+  <div class="edh"><span class="tag">Modifica diretta</span><span class="mono" id="edLoc"></span></div>
+  <div class="edinfo" id="edInfo"></div>
+  <textarea id="edText" spellcheck="false"></textarea>
+  <div class="row"><button id="edAlt">Crea una revisione invece</button><span class="sp"></span><button id="edCancel">Annulla</button><button id="edSave">Applica al file <kbd>↵</kbd></button></div>
+</div>
 <div id="toast"></div>
 <div id="pick"><span class="dot"></span><span id="pickt"></span></div>
 
@@ -632,7 +666,7 @@ const ACTS = [
 ];
 const PRESETS = ["Figura/tabella fuori posto","Esce dal margine","Spazio vuoto eccessivo","Titolo isolato a fine pagina",
                  "Deve iniziare su una pagina nuova","Troppo grande","Troppo piccola","A capo / sillabazione sbagliata"];
-const LABEL = a => (ACTS.find(x=>x[0]===a)||[0,"Nota generale"])[1];
+const LABEL = a => a==="edit" ? "Modifica diretta" : (ACTS.find(x=>x[0]===a)||[0,"Nota generale"])[1];
 const ZOOMS = [0.75, 1, 1.25, 1.5, 1.75, 2, 2.5];
 const $ = s => document.querySelector(s);
 const color = a => getComputedStyle(document.documentElement).getPropertyValue("--"+a).trim() || "#888";
@@ -728,10 +762,15 @@ function captureSelection(){
   return {text: s.toString(), rects, pt, anchor: range.getBoundingClientRect()};
 }
 document.addEventListener("mouseup", e=>{
-  if($("#pop").contains(e.target)) return;
+  if($("#pop").contains(e.target) || $("#edpop").contains(e.target)) return;
   setTimeout(()=>{
+    if(editMode && window.getSelection().isCollapsed && e.target.matches && e.target.matches(".textLayer span")){
+      const r = document.createRange(); r.selectNodeContents(e.target);
+      window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
+    }
     const sel = captureSelection(); if(!sel) return;
     if(picking) return finishMove(sel);
+    if(editMode) return openDirect(sel);
     openPop(sel, sel.anchor);
   }, 10);
 });
@@ -791,6 +830,11 @@ $("#presets").addEventListener("click", e=>{
   syncPresets(); t.focus();
 });
 document.addEventListener("keydown", e=>{
+  if(edOpen()){
+    if(e.key==="Escape"){ e.preventDefault(); closeEd(); }
+    else if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); applyDirect(); }
+    return;
+  }
   const om = document.querySelector(".modal.show");
   if(om){ if(e.key==="Escape") toggleModal(om.id, false); return; }
   if(popOpen()){
@@ -805,15 +849,20 @@ document.addEventListener("keydown", e=>{
   }
   if(picking && e.key==="Escape"){ stopPicking(); toast("Spostamento annullato"); return; }
   if(areaMode && e.key==="Escape"){ setAreaMode(false); return; }
+  if(editMode && e.key==="Escape"){ setEditMode(false); return; }
   if(!PID || (e.target.matches && e.target.matches("input,textarea,select"))) return;
   if(e.key==="?"){ e.preventDefault(); return toggleKeys(); }
   if((e.ctrlKey||e.metaKey) && (e.key==="+"||e.key==="=")){ e.preventDefault(); return $("#bZin").click(); }
   if((e.ctrlKey||e.metaKey) && e.key==="-"){ e.preventDefault(); return $("#bZout").click(); }
   if(e.key==="g"||e.key==="G"){ e.preventDefault(); generalNote(); }
+  if((e.key==="e"||e.key==="E") && !e.ctrlKey && !e.metaKey){ e.preventDefault(); setEditMode(!editMode); }
   if((e.key==="a"||e.key==="A") && !e.ctrlKey && !e.metaKey){ e.preventDefault(); setAreaMode(!areaMode); }
   if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="z"){ e.preventDefault(); undoLast(); }
 });
-document.addEventListener("mousedown", e=>{ if(popOpen() && !$("#pop").contains(e.target)) closePop(); });
+document.addEventListener("mousedown", e=>{
+  if(popOpen() && !$("#pop").contains(e.target)) closePop();
+  if(edOpen() && !$("#edpop").contains(e.target)) closeEd();
+});
 $("#popSave").onclick = savePending;
 function toggleModal(id, force){
   const k=document.getElementById(id), on = force ?? !k.classList.contains("show");
@@ -886,6 +935,8 @@ async function finishMove(destSel){
 }
 async function undoLast(){
   const id = undoStack.pop(); if(!id) return toast("Niente da annullare");
+  const it = items.find(i=>i.id===id);
+  if(it && it.action==="edit") return undoEdit(it);
   await removeItem(id); toast(`${id} annullata`);
 }
 async function removeItem(id){
@@ -935,6 +986,7 @@ function animateNumber(el, to){
 function body(it){
   // come appare la revisione nella scheda: per Sostituisci/Elimina/Inserisci si vede il prima e il dopo
   const q = esc(it.pdf_text||"");
+  if(it.action==="edit") return `<div class="diff src"><del>${esc(it.source_match)}</del><ins>${esc(it.note)}</ins></div>`;
   if(it.area) return `<div class="q areaq">Area · ${q || "figura, tabella o spazio vuoto"}</div>`;
   if(!q) return "";
   if(it.action==="replace") return `<div class="diff"><del>${q}</del><ins>${esc(it.note)}</ins></div>`;
@@ -974,13 +1026,13 @@ function renderList(){
       <div class="h">${pick}<span class="tag">${LABEL(it.action)}</span><span class="mono">${it.id}</span>${st_ || st}</div>
       ${body(it)}
       ${it.dest?`<div class="sub">${icon("arrow")}dopo «${esc(it.dest.pdf_text.slice(0,70))}» · p.${it.dest.page}</div>`:(it.action==="move"?`<div class="sub warn">${icon("alert")}manca il punto di arrivo: Modifica, poi Invio</div>`:"")}
-      ${it.note && !["replace","insert"].includes(it.action)?`<div class="n">${esc(it.note)}</div>`:""}
+      ${it.note && !["replace","insert","edit"].includes(it.action)?`<div class="n">${esc(it.note)}</div>`:""}
       ${it.ai_note?`<div class="ai">${esc(it.ai_note)}</div>`:""}
       ${it.status==="proposed" && (it.proposals||[]).length ? `<div class="props"><div class="pt">Proposte dell'AI · clicca quella che preferisci</div>
         ${it.proposals.map((p,i)=>`<button class="prop" data-op="pick" data-i="${i}">${esc(p.text||p)}${p.why?`<small>${esc(p.why)}</small>`:""}</button>`).join("")}
         <button class="linkb" data-op="redo">Nessuna mi convince: chiedi altre proposte</button></div>` : ""}
       <div class="sub">p.${it.page||"–"}${loc?` · <span class="mono">${esc(loc)}</span>`:""}${unanchored?` <span class="warn" title="Non collegata al testo sorgente: verrà usata la riga SyncTeX">${icon("alert")}</span>`:""}${it.scope==="all"?` · ${icon("all")}ovunque`:""}</div>
-      <div class="acts"><button class="ib" data-op="edit" title="Modifica">${icon("edit")}</button>${["style","later"].includes(it.status) ? "" : `<button class="ib" data-op="toggle" title="${isActive(it)?"Segna come fatta":"Riapri"}">${icon(isActive(it)?"check":"undo")}</button>`}${["open","proposed"].includes(it.status) ? `<button class="ib" data-op="later" title="Posticipa: non la invio ora, la riprendo dopo">${icon("clock")}</button>`
+      <div class="acts">${it.action==="edit" ? `<button class="ib" data-op="unedit" title="Annulla la modifica nel file .tex">${icon("undo")}</button>` : `<button class="ib" data-op="edit" title="Modifica">${icon("edit")}</button>`}${["style","later"].includes(it.status) || it.action==="edit" ? "" : `<button class="ib" data-op="toggle" title="${isActive(it)?"Segna come fatta":"Riapri"}">${icon(isActive(it)?"check":"undo")}</button>`}${["open","proposed"].includes(it.status) ? `<button class="ib" data-op="later" title="Posticipa: non la invio ora, la riprendo dopo">${icon("clock")}</button>`
       : it.status==="later" ? `<button class="ib" data-op="resume" title="Riprendi: torna tra le aperte">${icon("undo")}</button>` : ""}<button class="ib danger" data-op="del" title="Elimina">${icon("trash")}</button></div>
     </div>`;}).join("") || (items.length && (q||fa) ? `<div class="empty">Nessun risultato.</div>`
       : items.length ? `<div class="empty">Tutto fatto.</div>`
@@ -1002,6 +1054,7 @@ $("#list").addEventListener("click", async e=>{
     Object.assign(it, await api("/api/items/"+it.id,"PATCH",{status:"open", mode:"propose", rejected, proposals:null}));
     renderList(); drawHighlights(); toast(`${it.id}: al prossimo invio l'AI proporrà alternative diverse`); return;
   }
+  if(op==="unedit") return undoEdit(it);
   if(op==="sel"){ Object.assign(it, await api("/api/items/"+it.id,"PATCH",{selected: !isSel(it)})); renderList(); return; }
   if(op==="later" || op==="resume"){
     const patch = op==="later" ? {status:"later", prev_status: it.status} : {status: it.prev_status || "open"};
@@ -1076,7 +1129,72 @@ function setAreaMode(on){
   if(on){ $("#pickt").textContent = "Trascina un rettangolo sulla pagina (figura, tabella, spazio vuoto) · Esc per annullare"; $("#pick").classList.add("show"); }
   else if(!picking) $("#pick").classList.remove("show");
 }
-$("#bArea").onclick = ()=>setAreaMode(!areaMode);
+$("#bArea").onclick = ()=>{ setEditMode(false); setAreaMode(!areaMode); };
+
+// ---------------------------------------------------------------- modifica diretta del sorgente LaTeX
+let editMode = false, direct = null;
+function setEditMode(on){
+  if(on && PINFO && PINFO.kind!=="latex") return toast("La modifica diretta funziona con i progetti LaTeX: con un PDF importato usa le revisioni");
+  if(on) setAreaMode(false);
+  editMode = on; document.body.classList.toggle("editmode", on); $("#bEdit").classList.toggle("on", on);
+  if(on){ $("#pickt").textContent = "Clicca una riga (o seleziona il testo) da correggere · Esc per uscire"; $("#pick").classList.add("show"); }
+  else if(!picking && !areaMode) $("#pick").classList.remove("show");
+}
+$("#bEdit").onclick = ()=>setEditMode(!editMode);
+const edOpen = () => $("#edpop").classList.contains("show");
+function closeEd(){
+  const p=$("#edpop"); p.classList.remove("show"); direct=null; window.getSelection().removeAllRanges();
+  p._h = setTimeout(()=>{ if(!p.classList.contains("show")) p.style.display="none"; }, 220);
+}
+async function openDirect(sel){
+  setEditMode(false);
+  const p=$("#edpop"); clearTimeout(p._h); p.style.display="block";
+  direct = {sel, loc:null};
+  $("#edLoc").textContent = ""; $("#edText").value = ""; $("#edSave").disabled = true; $("#edAlt").style.display = "none";
+  $("#edInfo").className = "edinfo"; $("#edInfo").textContent = "Cerco il punto nel sorgente…";
+  const r = sel.anchor;
+  p.style.left = Math.max(12, Math.min(innerWidth-p.offsetWidth-12, r.left))+"px";
+  p.style.top = Math.max(12, Math.min(innerHeight-p.offsetHeight-60, r.bottom+10))+"px";
+  requestAnimationFrame(()=>p.classList.add("show"));
+  const loc = await api("/api/locate","POST",{page:sel.pt.page, x:sel.pt.x, y:sel.pt.y, text:sel.text});
+  if(!direct) return;
+  direct.loc = loc;
+  if(!loc.source_match){
+    $("#edInfo").className = "edinfo warn";
+    $("#edInfo").textContent = "Non trovo questo testo nel sorgente (forse è generato da una macro o da un ambiente speciale). Puoi creare una revisione normale per l'AI.";
+    $("#edAlt").style.display = ""; return;
+  }
+  $("#edLoc").textContent = `${loc.file.split("/").pop()}:${loc.line}`;
+  $("#edInfo").textContent = (loc.confidence < .8 ? "Controlla che sia il punto giusto. " : "") + "Questo è il sorgente LaTeX: correggilo e premi Invio, il file viene salvato e la tesi ricompilata.";
+  $("#edText").value = loc.source_match; $("#edSave").disabled = false; $("#edAlt").style.display = "";
+  $("#edText").focus(); $("#edText").setSelectionRange(loc.source_match.length, loc.source_match.length);
+}
+$("#edCancel").onclick = closeEd;
+$("#edAlt").onclick = ()=>{ const s = direct && direct.sel; closeEd(); if(s) setTimeout(()=>openPop(s, s.anchor), 230); };
+$("#edSave").onclick = ()=>applyDirect();
+async function applyDirect(){
+  if(!direct || !direct.loc || !direct.loc.source_match) return;
+  const {sel, loc} = direct, old = loc.source_match, neu = $("#edText").value;
+  if(neu === old){ closeEd(); return; }
+  $("#edSave").disabled = true;
+  const r = await api("/api/edit","POST",{file:loc.file, line:loc.line, old, new:neu});
+  if(!r.ok){ $("#edSave").disabled = false; return toast(r.error || "Modifica non riuscita", 6000); }
+  closeEd();
+  // resta nello storico come revisione gia' fatta, con "Annulla modifica"
+  const item = await api("/api/items","POST",{action:"edit", status:"done", selected:false, note:neu, source_match:old, pdf_text:cleanSel(sel.text),
+    file:loc.file, line:r.line, page:sel.pt.page, rects:sel.rects});
+  items.push(item); undoStack.push(item.id); renderList(); drawHighlights();
+  toast(`Salvato in ${loc.file.split("/").pop()}:${r.line} · ricompilo…  (Ctrl+Z annulla)`, 4000);
+  $("#bCompile").click();
+}
+async function undoEdit(it){
+  const r = await api("/api/edit/undo","POST",{file:it.file, line:it.line, old:it.source_match, new:it.note});
+  if(!r.ok) return toast(r.error || "Non riesco ad annullare: il testo nel file è cambiato", 6000);
+  undoStack = undoStack.filter(x=>x!==it.id);
+  await removeItem(it.id);
+  toast(`Modifica annullata in ${it.file.split("/").pop()} · ricompilo…`, 3000);
+  $("#bCompile").click();
+}
 $("#pages").addEventListener("pointerdown", e=>{
   const pg = e.target.closest(".page");
   if(!pg || e.button!==0 || !(areaMode || e.altKey) || picking) return;
