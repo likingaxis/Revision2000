@@ -22,11 +22,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
 REGISTRY = APP_HOME / "projects.json"
+RESTART_MARK = APP_HOME / ".restart"
+RESTART = threading.Event()
+SERVER = None
+RESTART_CODE = 3  # gli script di avvio rilanciano il server quando esce con questo codice
 
 ACTIONS = {
     "replace": ("SOSTITUISCI", "Sostituisci il testo ancorato con il nuovo testo indicato."),
@@ -37,6 +41,12 @@ ACTIONS = {
     "cite": ("CITAZIONE", "Serve/va corretta una citazione: usa chiavi esistenti in references.bib; se non esiste una fonte adatta NON inventarla, segnala in ai_note."),
     "check": ("VERIFICA", "Verifica correttezza/coerenza (fatto, numero, termine, riferimento). Modifica solo se l'errore e' certo, altrimenti riporta in ai_note."),
     "move": ("SPOSTA", "Sposta il testo ancorato subito DOPO il testo di destinazione indicato (sistema i raccordi in entrambi i punti)."),
+    "layout": ("IMPAGINAZIONE", "Problema di layout (figura/tabella fuori posto, testo che esce dal margine, spazio vuoto, "
+               "titolo isolato a fine pagina, salto pagina...). Intervieni sull'impaginazione, NON riscrivere il testo: "
+               r"opzioni di posizionamento dei float ([htbp], \FloatBarrier), \resizebox/\adjustbox o larghezze relative per tabelle "
+               r"e figure, \clearpage/\newpage, \needspace o \nopagebreak per i titoli, sillabazione con \hyphenation o \-, "
+               r"\sloppy/\emergencystretch locali. Preferisci la modifica piu' piccola e locale; non cambiare l'impostazione globale "
+               "del documento senza segnalarlo in ai_note."),
     "general": ("NOTA GENERALE", "Nota non ancorata a un punto preciso: applicala dove pertinente."),
 }
 
@@ -397,12 +407,21 @@ class Project:
                 L.append(f"### {it['id']} · {lab} · `{it.get('file')}:{it.get('line')}` · pag. PDF {it.get('page') or '-'}{prio}\n")
             else:
                 L.append(f"### {it['id']} · {lab} · pag. PDF {it.get('page') or '-'}{prio}\n")
-            if it.get("pdf_text"):
+            if it.get("area"):
+                r = (it.get("rects") or [{}])[0]
+                cy, cx = r.get("y", 0) + r.get("h", 0) / 2, r.get("x", 0) + r.get("w", 0) / 2
+                pos = ("in alto" if cy < .33 else "al centro" if cy < .66 else "in basso") +                       (" a sinistra" if cx < .33 else " a destra" if cx > .66 else "")
+                size = f"{round(r.get('w', 0) * 100)}% x {round(r.get('h', 0) * 100)}% della pagina"
+                L.append(f"- **Area selezionata** {pos} della pagina {it.get('page')} ({size})"
+                         + (f", contiene: «{it['pdf_text']}»" if it.get("pdf_text") else " (nessun testo: figura, tabella o spazio vuoto)"))
+            elif it.get("pdf_text"):
                 L.append(f"- **Testo nel PDF:** «{it['pdf_text']}»")
             if it.get("source_match"):
                 L.append(f"- **Sorgente ancorato** (confidenza {it.get('confidence')}):\n\n```latex\n{it['source_match']}\n```")
             elif it.get("source_context"):
-                L.append(f"- **Contesto sorgente (riga SyncTeX, ancoraggio testuale fallito):**\n\n```latex\n{it['source_context']}\n```")
+                head = ("Sorgente nel punto dell'area (SyncTeX, cerca qui vicino la figura/tabella o il blocco interessato)"
+                        if it.get("area") else "Contesto sorgente (riga SyncTeX, ancoraggio testuale fallito)")
+                L.append(f"- **{head}:**\n\n```latex\n{it['source_context']}\n```")
             dest = it.get("dest")
             if dest:
                 dloc = f"{dest.get('file')}:{dest.get('line')}" if dest.get("line") else "posizione non determinata"
@@ -555,6 +574,43 @@ def pick_folder():
     return {"unavailable": True}
 
 
+# -------------------------------------------------------------------- aggiornamento (git pull)
+
+def git(*args, timeout=30):
+    return subprocess.run(["git", *args], cwd=HERE, capture_output=True, text=True, timeout=timeout,
+                          encoding="utf-8", errors="replace")
+
+
+def update_check():
+    """Novita' disponibili sul repository remoto (solo se l'app e' stata scaricata con git clone)."""
+    if not (HERE / ".git").exists() or not shutil.which("git"):
+        return {"git": False, "version": __version__}
+    try:
+        if git("fetch", "--quiet", timeout=25).returncode:
+            return {"git": True, "error": "Impossibile contattare GitHub: sei offline?", "version": __version__}
+        if git("rev-parse", "--abbrev-ref", "@{u}").returncode:
+            return {"git": True, "error": "Nessun repository remoto configurato.", "version": __version__}
+        log = git("log", "--format=%s", "HEAD..@{u}").stdout.strip().splitlines()
+        return {"git": True, "behind": len(log), "changes": log[:8], "version": __version__}
+    except Exception as e:
+        return {"git": True, "error": str(e), "version": __version__}
+
+
+def update_apply():
+    try:
+        r = git("pull", "--ff-only", timeout=180)
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    if r.returncode:
+        msg = (r.stderr or r.stdout).strip()
+        if "local changes" in msg or "would be overwritten" in msg:
+            msg = "Hai modifiche locali ai file dell'app: aggiornamento annullato per non perderle."
+        return {"ok": False, "error": msg[-600:]}
+    # riavvio dopo aver risposto al browser
+    threading.Timer(0.4, lambda: (RESTART.set(), SERVER and SERVER.shutdown())).start()
+    return {"ok": True, "restarting": True}
+
+
 def tools_status():
     return {t: bool(shutil.which(t)) for t in ("pdflatex", "synctex", "bibtex", "biber", "xelatex")}
 
@@ -611,6 +667,8 @@ def make_handler():
                 ps = [get_project(e["id"]) for e in load_registry()]
                 return self.send(200, {"projects": [p.info() for p in ps if p], "tools": tools_status(), "home": str(Path.home()),
                                        "install": install_hint(), "version": __version__})
+            if u.path == "/api/update":
+                return self.send(200, update_check())
             if u.path == "/api/browse":
                 return self.send(200, browse((q.get("path") or [""])[0]))
             proj = self.proj()
@@ -642,6 +700,8 @@ def make_handler():
         def do_POST(self):
             u = urlparse(self.path)
             q = parse_qs(u.query)
+            if u.path == "/api/update":
+                return self.send(200, update_apply())
             if u.path == "/api/pick-folder":
                 return self.send(200, pick_folder())
             try:
@@ -715,6 +775,9 @@ def main():
     ap.add_argument("--version", action="version", version=f"Revision2000 {__version__}")
     a = ap.parse_args()
     url = f"http://127.0.0.1:{a.port}/"
+    if RESTART_MARK.exists():  # riavvio dopo un aggiornamento: il browser e' gia' aperto
+        RESTART_MARK.unlink(missing_ok=True)
+        a.no_browser = True
     if a.project:
         try:
             proj = add_latex(a.project, a.main)
@@ -723,8 +786,9 @@ def main():
         proj.write_md(proj.load())
         url += f"?p={proj.id}"
         print(f"Progetto: {proj.root} ({proj.main})  ·  revisioni in {proj.review_dir}")
+    global SERVER
     try:
-        srv = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler())
+        srv = SERVER = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler())
     except OSError:
         # probabilmente l'app e' gia' aperta (doppio avvio): basta riaprire il browser
         try:
@@ -743,6 +807,16 @@ def main():
         srv.serve_forever()
     except KeyboardInterrupt:
         pass
+    srv.server_close()
+    if RESTART.is_set():
+        APP_HOME.mkdir(parents=True, exist_ok=True)
+        RESTART_MARK.write_text("1")
+        print("Aggiornamento completato: riavvio...")
+        if os.environ.get("R2K_LAUNCHER"):
+            sys.exit(RESTART_CODE)  # start.bat / start.sh rilanciano il server
+        flags = (subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP) if os.name == "nt" else 0
+        subprocess.Popen([sys.executable, str(HERE / "server.py"), *sys.argv[1:]], cwd=HERE, creationflags=flags,
+                         start_new_session=os.name != "nt")
 
 
 if __name__ == "__main__":

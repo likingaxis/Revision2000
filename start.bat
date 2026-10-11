@@ -10,5 +10,9 @@ if not defined PY (
   call install.bat
   exit /b
 )
+REM codice di uscita 3 = l'app si e' aggiornata e chiede di essere riavviata
+set "R2K_LAUNCHER=1"
+:run
 %PY% server.py %*
+if %errorlevel%==3 goto run
 if errorlevel 1 pause
