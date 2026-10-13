@@ -23,7 +23,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-__version__ = "2.2.0"
+__version__ = "2.2.1"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
@@ -758,10 +758,65 @@ def register(entry):
     return get_project(entry["id"])
 
 
-def main_candidates(root: Path):
-    c = [f.name for f in sorted(root.glob("*.tex"))
-         if re.search(r"^\s*\\documentclass", f.read_text(encoding="utf-8", errors="replace"), re.M)]
-    return sorted(c, key=lambda n: (n != "main.tex", n))
+SKIP_DIRS = {"node_modules", "__pycache__", "build", "out", "dist", "_minted", "venv", ".venv"}
+_DOCCLASS = re.compile(r"\\documentclass\s*(\[[^\]]*\])?\s*\{([^}]*)\}")
+
+
+def _main_kind(f: Path):
+    """None se il file non e' un documento principale, altrimenti la sua classe (article, report, subfiles...)."""
+    try:
+        txt = f.read_text(encoding="utf-8-sig", errors="replace")[:300000]  # -sig: file salvati con BOM (Windows)
+    except OSError:
+        return None
+    txt = re.sub(r"(?<!\\)%.*", "", txt)  # un \documentclass commentato non conta
+    m = _DOCCLASS.search(txt)
+    return m.group(2).strip() if m else None
+
+
+def _tex_files(d: Path):
+    try:
+        return [f for f in sorted(d.iterdir(), key=lambda x: x.name.lower()) if f.is_file() and f.suffix.lower() == ".tex"]
+    except OSError:
+        return []
+
+
+def main_candidates(root: Path, deep=True):
+    """File .tex con \\documentclass. Prima nella cartella scelta; se li' non ce ne sono, anche nelle
+    sottocartelle (fino a 3 livelli: es. progetti Overleaf scaricati dentro una cartella in piu')."""
+    def scan(d: Path, prefix=""):
+        return [(prefix + f.name, k) for f in _tex_files(d) for k in [_main_kind(f)] if k]
+    found, seen, level = scan(root), 0, [(root, "")]
+    for _ in range(3 if deep else 0):
+        if found or not level:
+            break
+        nxt = []
+        for d, pre in level:
+            try:
+                subs = [c for c in sorted(d.iterdir(), key=lambda x: x.name.lower())
+                        if c.is_dir() and not c.name.startswith((".", "$")) and c.name not in SKIP_DIRS]
+            except OSError:
+                continue
+            for c in subs:
+                seen += 1
+                if seen > 400:  # cartella sbagliata (es. tutto il disco): non scavare all'infinito
+                    break
+                found += scan(c, pre + c.name + "/")
+                nxt.append((c, pre + c.name + "/"))
+        level = nxt
+    pref = ("main.tex", "tesi.tex", "thesis.tex")
+    found.sort(key=lambda x: (x[1] in ("subfiles", "standalone"), x[0].count("/"),
+                              x[0].rsplit("/", 1)[-1].lower() not in pref, x[0].lower()))
+    return [n for n, _ in found]
+
+
+def main_missing_reason(root: Path):
+    """Perche' non c'e' un file principale, detto in modo utile."""
+    tex = _tex_files(root)
+    if tex:
+        n = "c'è 1 file .tex, ma non contiene" if len(tex) == 1 else f"ci sono {len(tex)} file .tex, ma nessuno contiene"
+        return (f"In questa cartella {n} \\documentclass (sono capitoli o parti). "
+                "Scegli la cartella del file principale, di solito main.tex.")
+    return "Qui (e nelle sottocartelle) non ci sono file .tex: scegli la cartella del progetto LaTeX."
 
 
 def add_latex(path, main=None):
@@ -770,8 +825,11 @@ def add_latex(path, main=None):
         raise ValueError(f"Cartella non trovata: {root}")
     cands = main_candidates(root)
     if not cands:
-        raise ValueError("Nessun file .tex con \\documentclass nella cartella (scegli la cartella principale del progetto).")
+        raise ValueError(main_missing_reason(root))
     main = main if main in cands else cands[0]
+    if "/" in main:  # file principale in una sottocartella: il progetto parte da li' (gli \input sono relativi a lui)
+        sub, main = main.rsplit("/", 1)
+        root = (root / sub).resolve()
     pid = "tex-" + hashlib.sha1(f"{str(root).lower()}|{main}".encode()).hexdigest()[:10]
     return register({"id": pid, "kind": "latex", "root": str(root), "main": main, "name": root.name})
 
@@ -802,12 +860,12 @@ def browse(path):
                 continue
             if c.is_dir():
                 dirs.append({"name": c.name, "path": str(c)})
-            elif c.suffix == ".tex":
+            elif c.suffix.lower() == ".tex":
                 tex.append(c.name)
     except PermissionError:
         pass
     parent = str(p.parent) if p.parent != p else ("drives" if os.name == "nt" else None)
-    return {"path": str(p), "parent": parent, "dirs": dirs[:400], "tex": tex, "main": main_candidates(p) if tex else []}
+    return {"path": str(p), "parent": parent, "dirs": dirs[:400], "tex": tex, "main": main_candidates(p, deep=False) if tex else []}
 
 
 PICK_TK = r"""
@@ -853,7 +911,8 @@ def pick_folder():
         if not path:
             return {"cancelled": True}
         root = Path(path)
-        return {"path": str(root), "main": main_candidates(root) if root.is_dir() else []}
+        cands = main_candidates(root) if root.is_dir() else []
+        return {"path": str(root), "main": cands, "why": "" if cands else main_missing_reason(root)}
     return {"unavailable": True}
 
 

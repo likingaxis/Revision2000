@@ -1410,7 +1410,7 @@ document.addEventListener("mouseup", e=>{
 
 const popOpen = () => $("#pop").classList.contains("show");
 function openPop(sel, anchorRect){
-  pending = sel;
+  pending = sel; coachSeen();
   $("#popSel").textContent = sel.area ? `Area selezionata · pagina ${sel.pt.page}` + (sel.areaText ? ` · ${sel.areaText.slice(0,160)}` : "")
                           : sel.text ? sel.text.replace(/\s+/g," ").slice(0,220) : `Nota generale · pagina ${sel.pt.page}`;
   $("#popAll").checked=false; $("#popPen").checked=false; $("#popText").value=""; $("#popText").dataset.auto="0"; delete $("#popProp").dataset.touched;
@@ -1997,8 +1997,11 @@ function confetti(x, y){
     if(k < 2.5) requestAnimationFrame(frame); else c.remove();
   })(t0);
 }
+// il suggerimento iniziale sparisce per sempre appena lo segui (prima selezione, area o modifica)
+let coachDone = false; try{ coachDone = !!localStorage.getItem("r2k-coach"); }catch(e){}
+function coachSeen(){ if(coachDone) return; coachDone = true; try{ localStorage.setItem("r2k-coach","1"); }catch(_){} updateCoach(); }
 function updateCoach(){
-  const c = $("#coach"), on = !!(PID && pdf && !items.length);
+  const c = $("#coach"), on = !!(PID && pdf && !items.length && !coachDone);
   if(on){ const v = $("#viewer").getBoundingClientRect(); c.style.left = (v.left+v.width/2)+"px"; c.style.top = (v.bottom-74)+"px"; }
   c.classList.toggle("show", on);
 }
@@ -2148,7 +2151,7 @@ $("#bReload").onclick = async ()=>{ const b=$("#bReload"); b.classList.add("busy
 $("#bGen").onclick = generalNote;
 let areaMode = false;
 function setAreaMode(on){
-  areaMode = on; document.body.classList.toggle("areamode", on); $("#bArea").classList.toggle("on", on); syncTools();
+  areaMode = on; if(on) coachSeen(); document.body.classList.toggle("areamode", on); $("#bArea").classList.toggle("on", on); syncTools();
   if(on){ $("#pickt").textContent = "Trascina un rettangolo sulla pagina (figura, tabella, spazio vuoto) · Esc per annullare"; $("#pick").classList.add("show"); }
   else if(!picking) $("#pick").classList.remove("show");
 }
@@ -2166,6 +2169,7 @@ $("#bArea").onclick = ()=>{ setEditMode(false); setAreaMode(!areaMode); };
 // ---------------------------------------------------------------- modifica diretta del sorgente LaTeX
 let editMode = false, direct = null;
 function setEditMode(on){
+  if(on) coachSeen();
   if(on && PINFO && PINFO.kind!=="latex") return toast("La modifica diretta funziona con i progetti LaTeX: con un PDF importato usa le revisioni");
   if(on) setAreaMode(false);
   editMode = on; document.body.classList.toggle("editmode", on); $("#bEdit").classList.toggle("on", on); syncTools();
@@ -2589,7 +2593,7 @@ async function pickFolder(){
     showBrowser();
     return toast("Finestra di sistema non disponibile: scegli la cartella qui sotto", 5000);
   }
-  if(!d.main.length) return toast("In questa cartella non c'è un file .tex principale (con \documentclass)", 5000);
+  if(!d.main.length) return toast(d.why || "In questa cartella non c'è un file .tex principale", 7000);
   if(d.main.length===1) return openLatex(d.path, d.main[0]);
   $("#mains").innerHTML = `<span class="lbl">Questa cartella contiene più documenti, quale vuoi rivedere?</span>` +
     d.main.map((m,k)=>`<button data-m="${esc(m)}" style="animation-delay:${k*50}ms">${icon("tex")}${esc(m)}</button>`).join("");
