@@ -23,7 +23,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-__version__ = "2.2.2"
+__version__ = "2.2.3"
 HERE = Path(__file__).resolve().parent
 LOCK = threading.Lock()
 APP_HOME = Path(os.environ.get("REVISION2000_HOME", Path.home() / ".revision2000"))
@@ -502,6 +502,22 @@ class Project:
                 "author": pack.get("author"), "same_pdf": (sha == self.pdf_sha1()) if sha else None}
 
     # ------------------------------------------------------------ compile
+    AUX_EXT = (".aux", ".toc", ".lof", ".lot", ".out", ".bbl", ".bcf", ".run.xml", ".loa", ".lol", ".nav", ".snm")
+
+    def _park_stale_aux(self, build: Path):
+        """File ausiliari lasciati nella cartella da un'altra compilazione (Overleaf, TeXstudio...):
+        LaTeX li trova prima di quelli in build/ e legge etichette vecchie, quindi i riferimenti
+        restano "??" per sempre. Non li cancello: li sposto in build/_aux_esterni/."""
+        main_stem = Path(self.main).stem
+        names = {main_stem + e for e in self.AUX_EXT}
+        names |= {str(f.relative_to(self.root).with_suffix(".aux")) for f in self.tex_files()}
+        for n in names:
+            src = self.root / n
+            if src.is_file():
+                dst = build / "_aux_esterni" / n
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                os.replace(src, dst)
+
     def compile(self):
         """pdf/xe/lualatex + bibtex/biber senza latexmk (non serve Perl), Windows (MiKTeX) e
         Linux/macOS (TeX Live). File ausiliari in build/, nella cartella restano PDF e .synctex.gz."""
@@ -518,6 +534,7 @@ class Project:
             if str(rel) != ".":
                 (build / rel).mkdir(parents=True, exist_ok=True)
         stem = Path(self.main).stem
+        self._park_stale_aux(build)
         run = lambda cmd, cwd, env=None: subprocess.run(
             cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=600, encoding="utf-8", errors="replace")
         miktex = "MiKTeX" in run([engine, "--version"], self.root).stdout
