@@ -1071,7 +1071,7 @@ body:has(#pop.show) #coach,body:has(.modal.show) #coach{opacity:0}
   <div class="kr">Fatta / Dopo / Elimina<span>trascina la scheda</span></div>
   <div class="kr">Allarga il pannello<span>trascina il suo bordo</span></div>
   <div class="kr">Regola i colori del PDF<span>clic sul tema già attivo</span></div>
-  <div class="kr">Zoom<span><kbd>Ctrl</kbd> <kbd>+</kbd> / <kbd>−</kbd></span></div>
+  <div class="kr">Zoom<span><kbd>Ctrl</kbd> <kbd>+</kbd> / <kbd>−</kbd> oppure <kbd>Ctrl</kbd> + rotellina</span></div>
   <div class="kr">Questo pannello<span><kbd>?</kbd></span></div>
 </div></div>
 
@@ -2147,6 +2147,12 @@ try{ const z=+localStorage.getItem("r2k-zoom"); if(ZOOMS.includes(z)) scale=z; }
 setZoom(scale, false);
 $("#bZin").onclick = ()=>{ const i=ZOOMS.indexOf(scale); if(i<ZOOMS.length-1) setZoom(ZOOMS[i+1]); };
 $("#bZout").onclick = ()=>{ const i=ZOOMS.indexOf(scale); if(i>0) setZoom(ZOOMS[i-1]); };
+// Ctrl + rotellina (e pizzico sul touchpad): un passo di zoom alla volta, senza zoomare tutta la pagina del browser
+let _wz = 0; $("#viewer").addEventListener("wheel", e=>{
+  if(!e.ctrlKey && !e.metaKey) return;
+  e.preventDefault(); const now = performance.now(); if(now - _wz < 220 || !pdf) return; _wz = now;
+  (e.deltaY < 0 ? $("#bZin") : $("#bZout")).click();
+}, {passive:false});
 $("#bReload").onclick = async ()=>{ const b=$("#bReload"); b.classList.add("busy"); await loadPdf({diff:true}); setTimeout(()=>b.classList.remove("busy"),400); };
 $("#bGen").onclick = generalNote;
 let areaMode = false;
